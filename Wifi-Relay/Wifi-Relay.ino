@@ -1,110 +1,111 @@
 #include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
+#include <EmbAJAX.h>
+
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+
 
 // Replace with your network credentials
 const char* ssid = "testtest";
 const char* password = "testtest";
 
-ESP8266WebServer server(80);  // Create a webserver object on port 80
+#define relayPin 5  // GPIO5 connected to relay control pin
 
-const int relayPin = 5;  // GPIO5 connected to relay control pin
+#define BUFLEN 10
 
-bool timerType = false;    // false = Ton, true = Toff
-unsigned long timerValue = 0;  // Timer value in milliseconds
+int lastmode = 100;
 
-void handleRoot() {
-  String html = "<html><body><h1>Relay Control</h1>";
+EmbAJAXOutputDriverWebServerClass server(80);
+EmbAJAXOutputDriver driver(&server);
 
-  html += "<br><a href='#' id='relayOnBtn'>Turn On</a> <a href='#' id='relayOffBtn'>Turn Off</a>";
-  html += "<h2>Timer Settings</h2>";
-  html += "<form id='timerForm' action='/'>";
-  html += "<select name='timerType'>";
-  html += "<option value='0'";
-  if (!timerType) {
-    html += " selected";
-  }
-  html += ">Ton</option>";
-  html += "<option value='1'";
-  if (timerType) {
-    html += " selected";
-  }
-  html += ">Toff</option>";
-  html += "</select>";
-  html += " Timer: ";
-  html += "<input type='number' name='timerValue' min='0' max='3600' value='" + String(timerValue / 1000) + "'> seconds";
-  html += "<br><input type='submit' value='Set Timer'>";
-  html += "</form>";
-  html += "<p>Time remaining: <span id='timerStatus'>" + String(timerValue / 1000) + " seconds</span></p>";
-  html += "<script src='https://code.jquery.com/jquery-3.6.0.min.js'></script>";
-  html += "<script>";
-  html += "$(document).ready(function() {";
-  html += "  $('#timerForm').submit(function(event) {";
-  html += "    event.preventDefault();";
-  html += "    $.ajax({";
-  html += "      type: 'POST',";
-  html += "      url: $(this).attr('action'),";
-  html += "      data: $(this).serialize(),";
-  html += "      success: function(response) {";
-  html += "        $('#timerStatus').text(response.message);";
-  html += "      }";
-  html += "    });";
-  html += "  });";
-  html += "  $('#relayOnBtn').click(function(event) {";
-  html += "    event.preventDefault();";
-  html += "    $.ajax({";
-  html += "      type: 'POST',";
-  html += "      url: '/',";
-  html += "      data: { relay: 'on' },";
-  html += "      success: function(response) {";
-  html += "        $('#timerStatus').text(response.message);";
-  html += "      }";
-  html += "    });";
-  html += "  });";
-  html += "  $('#relayOffBtn').click(function(event) {";
-  html += "    event.preventDefault();";
-  html += "    $.ajax({";
-  html += "      type: 'POST',";
-  html += "      url: '/',";
-  html += "      data: { relay: 'off' },";
-  html += "      success: function(response) {";
-  html += "        $('#timerStatus').text(response.message);";
-  html += "      }";
-  html += "    });";
-  html += "  });";
-  html += "});";
-  html += "</script>";
-  html += "</body></html>";
+long int starttime = 0;
+int currenttime = 0;
+int timepassed = 0;
+int timerduration = 0;
 
-  if (server.method() == HTTP_POST) {
-    // Handle AJAX request
-    if (server.hasArg("relay")) {
-      if (server.arg("relay") == "on") {
-        digitalWrite(relayPin, HIGH);  // Turn relay on
-        server.send(200, "application/json", "{\"message\":\"Relay turned on\"}");
-      } else if (server.arg("relay") == "off") {
-        digitalWrite(relayPin, LOW);  // Turn relay off
-        server.send(200, "application/json", "{\"message\":\"Relay turned off\"}");
-      }
-    } else {
-      // Handle timer settings
-      if (server.hasArg("timerType")) {
-        timerType = server.arg("timerType").toInt() == 1;
-        timerValue = server.arg("timerValue").toInt() * 1000;  // Convert seconds to milliseconds
-      } else {
-        timerValue = 0;
-      }
-      server.send(200, "application/json", "{\"message\":\"Timer updated\"}");
-    }
-  } else {
-    // Handle regular request
-    server.send(200, "text/html", html);
-  }
+bool relay_status = 0;
+
+// Radio selector for mode select
+const char* modes[] = { "Override - Off", "Override - On", "Automatic schedule", "Delayed Timer" };
+EmbAJAXRadioGroup<4> Radio_mode("mode", modes);
+
+
+// Delayed Timer
+EmbAJAXMomentaryButton m_button_Timer_Set("Timer_Set", "Timer_Set");  // Timer set
+
+
+EmbAJAXTextInput<BUFLEN> input_time_duration("input_time_duration");
+char input_time_duration_b[BUFLEN];
+
+
+const char* Timer_Array[] = { "10min", "30min", "1 hour", "3 hours", "6 hours" };
+EmbAJAXOptionSelect<5> Dropdown_Time("Time_Array", Timer_Array);
+
+
+
+EmbAJAXMutableSpan Relay_enabled_status("relay_status");
+
+
+// Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
+// static HTML. Note: MAKE_EmbAJAXPage is just a convenience macro around the EmbAJAXPage<>-class.
+MAKE_EmbAJAXPage(page, "Wifi Relay Interface", "",
+                 // Page Header
+
+                 new EmbAJAXStatic("<h1>Wifi Relay - Overview </h1><p>Set the LED to: "),
+                 &Radio_mode,
+                 new EmbAJAXStatic("<hr><br>"),
+
+
+
+
+                 // Override Display Control - On
+
+
+                 // Override Display Control - Off
+
+                 // Automatic Display Control
+
+                 // Timer  Display Control
+
+                 &Dropdown_Time,
+
+
+                 &m_button_Timer_Set,
+
+
+                 // Page Footer
+                 new EmbAJAXStatic("<br><hr>"),
+
+                 new EmbAJAXStatic("<Br >Connection status:"),
+                 new EmbAJAXConnectionIndicator(),
+                 &Relay_enabled_status)
+
+
+  // posable options
+  //
+  // NTP server
+  // TIMEZONE
+  // daylight saving
+
+
+  MAKE_EmbAJAXPage(Control_Configuration, "Wifi Relay - Configuration", "",
+                   new EmbAJAXStatic("<h1>Configeration page</h1>"))
+
+    void pinMode_function(int pin, bool state) {
+  relay_status = state;
+  digitalWrite(pin, state);
+  Serial.print("Pin State: ");
+    Serial.println(state);
 }
 
-void setup() {
-  pinMode(relayPin, OUTPUT);    // Set relay pin as output
-  digitalWrite(relayPin, LOW);  // Initialize relay to off
 
+void setup() {
+
+  pinMode(relayPin, OUTPUT);    // Set relay pin as output
+  pinMode_function(relayPin, LOW);  // Initialize relay to off
+
+
+  // Setup Network
   Serial.begin(115200);
   WiFi.begin(ssid, password);  // Connect to WiFi
   while (WiFi.status() != WL_CONNECTED) {
@@ -118,37 +119,154 @@ void setup() {
   Serial.println(WiFi.localIP());  // Print the IP address to Serial Monitor
   Serial.println("WiFi status: " + String(WiFi.status()));
 
-  server.on("/", handleRoot);  // Associate handleRoot function to web server root URL
-  server.begin();              // Start the web server
-  Serial.println("HTTP server started");
+  // Create Pages
+
+  driver.installPage(&page, "/", updateUI);
+  driver.installPage(&Control_Configuration, "/config", updateUI);
+  server.begin();
+
+  updateUI();  // init displays
 }
 
-void loop() {
-  server.handleClient();  // Handle incoming HTTP requests
 
-  // Check timer
-  if (timerValue > 0) {
-    if (!timerType) {
-      digitalWrite(relayPin, HIGH);  // Turn relay on
-    } else {
-      digitalWrite(relayPin, LOW);  // Turn relay off
+
+
+
+void updateUI() {
+  // Enabled / disable the slider. Note that you could simply do this inside the loop. However,
+  // placing it here makes the client UI more responsive (try it).
+  // timeractive.setEnabled(timer!= 0);
+
+  // Override Display Control - On
+
+
+  // Override Display Control - Off
+
+  // Automatic Display Control
+
+  // Timer  Display Control
+
+
+  Dropdown_Time.setVisible(Radio_mode.selectedOption() == 3);
+  input_time_duration.setVisible(Radio_mode.selectedOption() == 3);
+  m_button_Timer_Set.setVisible(Radio_mode.selectedOption() == 3);
+
+  // Save timer variables
+  if (m_button_Timer_Set.status() == EmbAJAXMomentaryButton::Pressed) {
+
+    Serial.println("Timer Data Submitted");
+
+
+
+
+
+
+
+    switch (Dropdown_Time.selectedOption()) {
+      case 0:
+        timerduration = 10;
+        break;
+      case 1:
+        timerduration = 30;
+        break;
+      case 2:
+        timerduration = 60;
+        break;
+      case 3:
+        timerduration = 180;
+        break;
+      case 4:
+        timerduration = 360;
+        break;
+      case 5:
+        timerduration = 0;  // Not used yet
+        break;
+      case 6:
+        timerduration = 0;  // Not used yet
+        break;
+      default:
+        Serial.println("Error Invalid Timer duration ");
+        break;
     }
-    timerValue -= 1000;             // Decrement timer by 1 second
-    delay(1000);
-    Serial.print("Time remaining: ");
-    Serial.println(timerValue);
-    
-    // Update timer status
-    server.send(200, "application/json", "{\"message\":\"" + String(timerValue / 1000) + " seconds\"}");
-    
-    if (timerValue <= 0) {
-      if (!timerType) {
-        digitalWrite(relayPin, LOW);  // Turn relay off
-        Serial.println("Ton Timer expired, relay turned off");
-      } else {
-        digitalWrite(relayPin, HIGH);  // Turn relay on
-        Serial.println("Toff Timer expired, relay turned on");
-      }
+    Serial.print("Selected Timer duration: ");
+    Serial.println(timerduration);
+    timerduration = timerduration * 100;  // timer scaler value
+    starttime = millis();                 // Save the time when the button was pushed
+  }
+}
+
+// Footer Display
+
+
+
+
+void loop() {
+  // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+  driver.loopHook();
+
+  // And these lines are all you have to write for the logic: Access the elements as if they were plain
+  // local controls
+  if (Radio_mode.selectedOption() == 0) {  // Override - OFF
+
+    if (lastmode != Radio_mode.selectedOption()) {  // execute code only once  on mode switch
+      lastmode = Radio_mode.selectedOption();
+      Serial.print("Selected mode: ");
+      Serial.println(Radio_mode.selectedOption());
+      pinMode_function(relayPin, LOW);
+    }
+
+
+
+  } else if (Radio_mode.selectedOption() == 1) {    // Override - ON
+    if (lastmode != Radio_mode.selectedOption()) {  // execute code only once on mode switch
+      lastmode = Radio_mode.selectedOption();
+      Serial.print("Selected mode: ");
+      Serial.println(Radio_mode.selectedOption());
+      pinMode_function(relayPin, HIGH);
     }
   }
+
+  else if (Radio_mode.selectedOption() == 3) {      // Override - ON
+    if (lastmode != Radio_mode.selectedOption()) {  // execute code only once on mode switch
+      lastmode = Radio_mode.selectedOption();
+      Serial.print("Selected mode: ");
+      Serial.println(Radio_mode.selectedOption());
+      pinMode_function(relayPin, HIGH);
+      timerduration = 0;  // reset timer
+    }
+
+
+
+
+    currenttime = millis();
+    timepassed = currenttime - starttime;
+
+
+
+
+
+    if (timepassed >= 1000 && timerduration != 0) {
+      starttime = millis();
+      Serial.print("Remaining duration: ");
+      Serial.println(timerduration);
+
+      if (timerduration < 1000) {
+
+        timerduration = 0;  // provent int overflow
+      } else {
+        timerduration = timerduration - 1000;  // decress timer by 1 second
+      }
+    }
+
+    if (timerduration != 0) {
+
+      pinMode_function(relayPin, HIGH);
+    } else {
+      pinMode_function(relayPin, LOW);
+    }
+  }
+
+
+Relay_enabled_status.setValue((relay_status == HIGH) ? "Relay Status: Enabled" : "Relay Status: Disabled");
+
 }
