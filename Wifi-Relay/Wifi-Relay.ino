@@ -19,13 +19,11 @@ const char* password = "testtest";
 #define BUFLEN 10
 
 int lastmode = 100;
-
+int currentMode = 0;
 
 // NTP Server
 const char* ntpServer = "nz.pool.ntp.org";
 static const char ntpServerName[] = "nz.pool.ntp.org";
-
-
 
 
 // New Zealand Daylight Saving Time rules
@@ -45,15 +43,8 @@ void sendNTPpacket(IPAddress& address);
 
 int currentHour = 0;  // Variable to store the current hour in 24-hour format
 
-
 // 24 hours array
 bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Initialize with all hours OFF
-
-
-
-
-
-
 
 EmbAJAXOutputDriverWebServerClass server(80);
 EmbAJAXOutputDriver driver(&server);
@@ -66,9 +57,12 @@ int timerduration = 0;
 bool relay_status = 0;
 
 // Radio selector for mode select
-const char* modes[] = { "Override - Off", "Override - On", "Automatic schedule", "Delayed Timer" };
-EmbAJAXRadioGroup<4> Radio_mode("mode", modes);
+const char* modes[] = { "hidden", "Override - Off", "Override - On", "Automatic schedule", "Delayed Timer" };
+EmbAJAXRadioGroup<5> Radio_mode("mode", modes);
 
+EmbAJAXMomentaryButton m_button_Mode_submit("Submit_mode", "Submit mode");  // Timer set
+EmbAJAXMutableSpan status_Mode_submit("mode_status");
+char status_Mode_submit_b[BUFLEN];
 
 
 // Automated
@@ -241,229 +235,246 @@ EmbAJAXMutableSpan Remaining_Timer("Remaining_Timer_HH_MM");
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
 // static HTML. Note: MAKE_EmbAJAXPage is just a convenience macro around the EmbAJAXPage<>-class.
-MAKE_EmbAJAXPage(page, "Wifi Relay Interface",
-                 "<meta charset=\"UTF-8\">\n"
-                 "<style>\n"
-                 "@charset \"utf-8\";\n"
-                 "div.unselectable {\n"
-                 "  -webkit-touch-callout: none;\n"
-                 " -webkit-user-select: none;\n"
-                 " -khtml-user-select: none;\n"
-                 " -moz-user-select: none;\n"
-                 " -ms-user-select: none;\n"
-                 " user-select: none;\n"
-                 "}\n"
-                 "*{font-family:Fantasy; padding:0.1em;}\n"
-                 "td {text-align: center;}\n"
-                 "table.schedule{font-size: 1em}"
-                 "table.footer {  border-collapse: collapse;  width: 100%;}\n"
-                 "#Time_Array{font-size: 1.5em;padding:0.1em;}\n"
-                 "hr {padding:0px;}"
+MAKE_EmbAJAXPage(
+  page, "Wifi Relay Interface",
+  "<meta charset=\"UTF-8\">\n"
+  "   <style>\n"
+  "   @charset \"utf-8\";\n"
+  "div.unselectable {\n"
+  "  -webkit-touch-callout: none;\n"
+  " -webkit-user-select: none;\n"
+  " -khtml-user-select: none;\n"
+  " -moz-user-select: none;\n"
+  " -ms-user-select: none;\n"
+  " user-select: none;\n"
+  "}\n"
+  "*{font-family:Fantasy; padding:0.1em;}\n"
+  "td {text-align: center;}\n"
+  "table.schedule{font-size: 1em}"
+  "table.footer {  border-collapse: collapse;  width: 100%;}\n"
+  "#Time_Array{font-size: 1.5em;padding:0.1em;}\n"
+  "hr {padding:0px;}"
 
 
-                 "@charset \"utf-8\";\n"
+  "@charset \"utf-8\";\n"
 
-                 "/* General styles */\n"
-                 "* {\n"
-                 "    font-family: Arial, sans-serif;\n"
-                 "}\n"
+  "/* General styles */\n"
+  "* {\n"
+  "    font-family: Arial, sans-serif;\n"
+  "}\n"
 
-                 "h1 {\n"
-                 "    font-size: 2.6em;\n" /* Original size: 1.5em, now 2em */
-                 "    text-align: center;\n"
-                 "}\n"
+  "h1 {\n"
+  "    font-size: 2.6em;\n" /* Original size: 1.5em, now 2em */
+  "    text-align: center;\n"
+  "}\n"
 
-                 "input[type=radio], input[type=checkbox] {\n"
-                 "    width: 2.2em;\n" /* Increased width */
-                 "    height: 2em;\n"  /* Increased height */
-                 "}\n"
+  "input[type=radio], input[type=checkbox] {\n"
+  "    width: 2.2em;\n" /* Increased width */
+  "    height: 2em;\n"  /* Increased height */
+  "}\n"
 
-                 "td {\n"
-                 "    text-align: center;\n"
-                 "    padding: 5px;\n"
-                 "    font-size: 1.2em;\n" /* Slightly increased font size */
-                 "}\n"
+  "td {\n"
+  "    text-align: center;\n"
+  "    padding: 5px;\n"
+  "    font-size: 1.2em;\n" /* Slightly increased font size */
+  "}\n"
 
-                 "/* Styles for tables */\n"
-                 "table {\n"
-                 "    width: 100%;\n"
-                 "    margin: 10px 0;\n"
-                 "    font-size: 1.2em;\n" /* Slightly increased font size */
-                 "}\n"
+  "/* Styles for tables */\n"
+  "table {\n"
+  "    width: 100%;\n"
+  "    margin: 10px 0;\n"
+  "    font-size: 1.2em;\n" /* Slightly increased font size */
+  "}\n"
 
-                 "table.schedule {\n"
-                 "    font-size: 0.9em;\n" /* Original size: 0.9em, now 1.1em */
-                 "}\n"
+  "table.schedule {\n"
+  "    font-size: 0.9em;\n" /* Original size: 0.9em, now 1.1em */
+  "}\n"
 
-                 "table.schedule td {\n"
-                 "   vertical-align: middle;\n"
-                 "}\n"
+  "table.schedule td {\n"
+  "   vertical-align: middle;\n"
+  "}\n"
 
-                 "table.schedule td span:not(label) {\n"
-                 " font-size: 1.8em;\n" /* Adjust this value to your desired font size */
-                 "}\n"
-                 "table.schedule td label {\n"
-                 "  font-size: 0.8em;" /* Example: keeping labels at a smaller size */
-                 "}\n"
-                 "table.footer {\n"
-                 "    width: 100%;\n"
-                 "    border-collapse: collapse;\n"
-                 "    font-size: 1.2em;\n" /* Slightly increased font size */
-                 "}\n"
+  "table.schedule td span:not(label) {\n"
+  " font-size: 1.8em;\n" /* Adjust this value to your desired font size */
+  "}\n"
+  "table.schedule td label {\n"
+  "  font-size: 0.8em;" /* Example: keeping labels at a smaller size */
+  "}\n"
+  "table.footer {\n"
+  "    width: 100%;\n"
+  "    border-collapse: collapse;\n"
+  "    font-size: 1.2em;\n" /* Slightly increased font size */
+  "}\n"
 
-                 "label {\n"
-                 "    display: inline-block;\n"
-                 "    margin-left: 5px;\n"
-                 "    font-size: 1.5em;\n" /* Slightly increased font size */
-                 "}\n"
-
-
-                 "/* Styles for smaller screens */\n"
-                 "@media (max-width: 600px) {\n"
-                 "    body {\n"
-                 "        padding: 10px;\n"
-                 "        font-size: 1.1em;\n" /* Original size: 0.9em, now 1.1em */
-                 "    }\n"
-                 "    \n"
-                 "    h1 {\n"
-                 "        font-size: 1.6em;\n" /* Original size: 1.2em, now 1.6em */
-                 "    }\n"
-                 "    \n"
-                 "    .radio, .checkbox {\n"
-                 "        padding:0.2em;"
-                 "        display: block;\n"
-                 "        margin-bottom: 10px;\n"
-                 "        font-size: 1.2em;\n" /* Slightly increased font size */
-                 "    }\n"
-                 "    \n"
-                 "    table.schedule tbody tr td {\n"
-                 "        display: block;\n"
-                 "        width: 100%;\n"
-                 "        margin-bottom: 10px;\n"
-                 "        font-size: 1.1em;\n" /* Slightly increased font size */
-                 "    }\n"
-                 "    \n"
-                 "    table.schedule tbody tr td span {\n"
-                 "        display: inline-block;\n"
-                 "        margin-bottom: 5px;\n"
-                 "        font-size: 1.2em;\n" /* Slightly increased font size */
-                 "    }\n"
-                 "    \n"
-                 "    table.schedule tbody tr td label {\n"
-                 "        width: 100%;\n"
-                 "        font-size: 1.2em;\n" /* Slightly increased font size */
-                 "        padding-top:0.5em;\n"
-                 "    }\n"
-                 "    table.schedule span {\n"
-                 "        padding-top:0.5em;\n"
-                 "        padding-bottom:1em;\n"
-                 "    }\n"
-                 "    \n"
-                 "    center {\n"
-                 "        display: block;\n"
-                 "    }\n"
-                 "    \n"
-                 "    center > * {\n"
-                 "        display: block;\n"
-                 "        margin: 10px auto;\n"
-                 "        font-size: 1.2em;\n" /* Slightly increased font size */
-                 "    }\n"
-                 "    \n"
-                 "    button {\n"
-                 "        width: 100%;\n"
-                 "        padding: 10px;\n"
-                 "        font-size: 1.2em;\n" /* Original size: 1em, now 1.2em */
-                 "        padding: 0.5em;\n"
-                 "    }\n"
-                 "    \n"
-                 "    .EmbAJAXStatus span {\n"
-                 "        display: block;\n"
-                 "        margin: 5px 0;\n"
-                 "        font-size: 1.2em;\n" /* Slightly increased font size */
-                 "    }\n"
-                 "    \n"
-                 "    table.footer td {\n"
-                 "        display: block;\n"
-                 "        width: 100%;\n"
-                 "        text-align: left;\n"
-                 "        font-size: 1.2em;\n" /* Slightly increased font size */
-                 "    }\n"
-                 "}\n"
-
-                 "/* New Styles */\n"
-                 "p {\n"
-                 "    font-size: 1.2em;\n" /* Increased size for text including "Control mode:" */
-                 "}\n"
-
-                 ".radio label, .checkbox label {\n"
-                 "    font-size: 1.4em;\n"       /* Slightly increased size for radio/checkbox text */
-                 "    vertical-align: middle;\n" /* Vertically centered text */
-                 "    padding-top: 0.5em;\n"
-                 "    padding-bottom: 0.73em;\n"
-                 "}\n"
-
-                 "button {\n"
-                 "    font-size: 1.5em;\n" /* Adjusted to be similar to the schedule text size */
-                 "}\n"
-
-                 "table.footer td {\n"
-                 "    display: table-cell;\n" /* Display cells side by side */
-                 "    width: auto;\n"
-                 "}\n"
-
-                 "table.footer tr {\n"
-                 "    display: table-row;\n"
-                 "}\n"
-
-                 "/* Additional styles to align span with checkbox text */\n"
-                 "input[type=checkbox] + label, input[type=radio] + label {\n"
-                 "    display: inline-flex;\n"
-                 "    align-items: center;\n"
-                 "}\n"
-
-                 "input[type=checkbox] + label span, input[type=radio] + label span {\n"
-                 "    font-size: 1.4em;\n"       /* Match the size of the checkbox text */
-                 "    vertical-align: middle;\n" /* Vertically center the span */
-                 "}\n"
+  "label {\n"
+  "    display: inline-block;\n"
+  "    margin-left: 5px;\n"
+  "    font-size: 1.5em;\n" /* Slightly increased font size */
+  "}\n"
 
 
+  "/* Styles for smaller screens */\n"
+  "@media (max-width: 600px) {\n"
+  "    body {\n"
+  "        padding: 10px;\n"
+  "        font-size: 1.1em;\n" /* Original size: 0.9em, now 1.1em */
+  "    }\n"
+  "    \n"
+  "    h1 {\n"
+  "        font-size: 1.6em;\n" /* Original size: 1.2em, now 1.6em */
+  "    }\n"
+  "    \n"
+  "    .radio, .checkbox {\n"
+  "        padding:0.2em;"
+  "        display: block;\n"
+  "        margin-bottom: 10px;\n"
+  "        font-size: 1.2em;\n" /* Slightly increased font size */
+  "    }\n"
+  "    \n"
+  "    table.schedule tbody tr td {\n"
+  "        display: block;\n"
+  "        width: 100%;\n"
+  "        margin-bottom: 10px;\n"
+  "        font-size: 1.1em;\n" /* Slightly increased font size */
+  "    }\n"
+  "    \n"
+  "    table.schedule tbody tr td span {\n"
+  "        display: inline-block;\n"
+  "        margin-bottom: 5px;\n"
+  "        font-size: 1.2em;\n" /* Slightly increased font size */
+  "    }\n"
+  "    \n"
+  "    table.schedule tbody tr td label {\n"
+  "        width: 100%;\n"
+  "        font-size: 1.2em;\n" /* Slightly increased font size */
+  "        padding-top:0.5em;\n"
+  "    }\n"
+  "    table.schedule span {\n"
+  "        padding-top:0.5em;\n"
+  "        padding-bottom:1em;\n"
+  "    }\n"
+  "    \n"
+  "    center {\n"
+  "        display: block;\n"
+  "    }\n"
+  "    \n"
+  "    center > * {\n"
+  "        display: block;\n"
+  "        margin: 10px auto;\n"
+  "        font-size: 1.2em;\n" /* Slightly increased font size */
+  "    }\n"
+  "    \n"
+  "    button {\n"
+  "        width: 100%;\n"
+  "        padding: 10px;\n"
+  "        font-size: 1.2em;\n" /* Original size: 1em, now 1.2em */
+  "        padding: 0.5em;\n"
+  "    }\n"
+  "    \n"
+  "    .EmbAJAXStatus span {\n"
+  "        display: block;\n"
+  "        margin: 5px 0;\n"
+  "        font-size: 1.2em;\n" /* Slightly increased font size */
+  "    }\n"
+  "    \n"
+  "    table.footer td {\n"
+  "        display: block;\n"
+  "        width: 100%;\n"
+  "        text-align: left;\n"
+  "        font-size: 1.2em;\n" /* Slightly increased font size */
+  "    }\n"
+  "}\n"
 
+  "/* New Styles */\n"
+  "p {\n"
+  "    font-size: 1.2em;\n" /* Increased size for text including "Control mode:" */
+  "}\n"
 
-                 "</style>",
-                 // Page Header
+  ".radio label, .checkbox label {\n"
+  "    font-size: 1.4em;\n"       /* Slightly increased size for radio/checkbox text */
+  "    vertical-align: middle;\n" /* Vertically centered text */
+  "    padding-top: 0.5em;\n"
+  "    padding-bottom: 0.73em;\n"
+  "}\n"
+
+  "button {\n"
+  "    font-size: 1.5em;\n" /* Adjusted to be similar to the schedule text size */
+  "}\n"
+
+  "table.footer td {\n"
+  "    display: table-cell;\n" /* Display cells side by side */
+  "    width: auto;\n"
+  "}\n"
+
+  "table.footer tr {\n"
+  "    display: table-row;\n"
+  "}\n"
+
+  "/* Additional styles to align span with checkbox text */\n"
+  "input[type=checkbox] + label, input[type=radio] + label {\n"
+  "    display: inline-flex;\n"
+  "    align-items: center;\n"
+  "}\n"
+
+  "input[type=checkbox] + label span, input[type=radio] + label span {\n"
+  "    font-size: 1.4em;\n"       /* Match the size of the checkbox text */
+  "    vertical-align: middle;\n" /* Vertically center the span */
+  "}\n"
 
 
 
-                 new EmbAJAXStatic("<h1>Wifi Relay - Overview </h1><center>"),
-                 &Radio_mode,
-                 new EmbAJAXStatic("</center><hr><br>"),
 
-                 // Override Display Control - On
-
-                 // Override Display Control - Off
-
-                 // Automatic Display Control
-
-                 &hours_contents,
+  "</style>",
+  // Page Header
 
 
-                 // Timer  Display Control
-                 new EmbAJAXStatic("<center>"),
-                 &Dropdown_Time,
+
+  new EmbAJAXStatic("<h1>Wifi Relay - Overview </h1><center>"),
+  &Radio_mode,
+  new EmbAJAXStatic("<br>"),
+  &m_button_Mode_submit,
+  &status_Mode_submit,
+  new EmbAJAXStatic("</center><hr><br>"),
+
+  // Override Display Control - On
+
+  // Override Display Control - Off
+
+  // Automatic Display Control
+
+  &hours_contents,
 
 
-                 &m_button_Timer_Set,
-                 new EmbAJAXStatic("<br><h2>"),
-                 &Remaining_Timer,
-                 new EmbAJAXStatic("</h2></center>"),
-                 // Page Footer
-                 new EmbAJAXStatic("<br><hr><center><table><tr><td>Connection status:</td><td text-align=\"Right\">"),
-                 new EmbAJAXConnectionIndicator(),
-                 new EmbAJAXStatic("</td><td>"),
-                 &Relay_enabled_status,
-                 new EmbAJAXStatic("</td><td text-align=\"Right\"><span>    Timestamp: </span></td><td text-align=\"left\">"),
-                 &Current_time_status,
-                 new EmbAJAXStatic("</td></tr></center></table>"));
+  // Timer  Display Control
+  new EmbAJAXStatic("<center>"),
+  &Dropdown_Time,
+
+
+  &m_button_Timer_Set,
+  new EmbAJAXStatic("<br><h2>"),
+  &Remaining_Timer,
+  new EmbAJAXStatic("</h2></center>"),
+  // Page Footer
+  new EmbAJAXStatic("<br><hr><center><table><tr><td>Connection status:</td><td text-align=\"Right\">"),
+  new EmbAJAXConnectionIndicator(),
+  new EmbAJAXStatic("</td><td>"),
+  &Relay_enabled_status,
+  new EmbAJAXStatic("</td><td text-align=\"Right\"><span>    Timestamp: </span></td><td text-align=\"left\">"),
+  &Current_time_status,
+  new EmbAJAXStatic("</td></tr></center></table>"),
+  new EmbAJAXStatic(
+  "    <script>"
+    // Hide the element with ID 'mode0'
+  "    document.getElementById('mode0').style.display = 'none';"
+    // Hide the corresponding label
+  "    var label = document.querySelector('label[for=\"mode0\"]');"
+  "    if (label) {"
+  "    label.style.display = 'none';"
+  "    }</script>"));
+
+
+
+
 
 
 void pinMode_function(int pin, bool state) {
@@ -482,7 +493,7 @@ void setup() {
 
   Serial.println("Schedule Saved to EEPROM");
   loadSchedule();  // load schedule array from NVM
-
+  loadMode();
   // Setup Network
   Serial.begin(115200);
   delay(1000);
@@ -532,7 +543,7 @@ void updateUI() {
 
   // Automatic Display Control
 
-  hours_contents.setVisible(Radio_mode.selectedOption() == 2);
+  hours_contents.setVisible(currentMode == 3);
 
 
 
@@ -568,10 +579,10 @@ void updateUI() {
   // Timer  Display Control
 
 
-  Dropdown_Time.setVisible(Radio_mode.selectedOption() == 3);
-  input_time_duration.setVisible(Radio_mode.selectedOption() == 3);
-  m_button_Timer_Set.setVisible(Radio_mode.selectedOption() == 3);
-  Remaining_Timer.setVisible(Radio_mode.selectedOption() == 3);
+  Dropdown_Time.setVisible(currentMode == 4);
+  input_time_duration.setVisible(currentMode == 4);
+  m_button_Timer_Set.setVisible(currentMode == 4);
+  Remaining_Timer.setVisible(currentMode == 4);
   // Save timer variables
   if (m_button_Timer_Set.status() == EmbAJAXMomentaryButton::Pressed) {
 
@@ -607,6 +618,20 @@ void updateUI() {
 
     starttime = millis();  // Save the time when the button was pushed
   }
+
+
+
+
+
+  if (m_button_Mode_submit.status() == EmbAJAXMomentaryButton::Pressed) {
+    currentMode = Radio_mode.selectedOption();
+    Serial.println("Mode updated");
+    saveMode();
+
+    //  status_Mode_submit.setValue(itoa(currentMode,status_Mode_submit_b,10));
+
+    selectMode();
+  }
 }
 
 // Footer Display
@@ -615,46 +640,44 @@ void updateUI() {
 
 
 void loop() {
-
-
-    unsigned long seconds_remaining = timerduration / 1000;
-    unsigned long minutes_remaining = seconds_remaining / 60;
-    unsigned long hours_remaining = minutes_remaining / 60;
-    seconds_remaining = seconds_remaining % 60;
-    minutes_remaining = minutes_remaining % 60;
-    char formattedTime_remaining[9] = " ";  // HH:MM:SS\0
-    sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
-
-
-
   // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
   driver.loopHook();
 
-  // And these lines are all you have to write for the logic: Access the elements as if they were plain
-  // local controls
-  if (Radio_mode.selectedOption() == 0) {  // Override - OFF
+  unsigned long seconds_remaining = timerduration / 1000;
+  unsigned long minutes_remaining = seconds_remaining / 60;
+  unsigned long hours_remaining = minutes_remaining / 60;
+  seconds_remaining = seconds_remaining % 60;
+  minutes_remaining = minutes_remaining % 60;
+  char formattedTime_remaining[9] = " ";  // HH:MM:SS\0
+  sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
 
-    if (lastmode != Radio_mode.selectedOption()) {  // execute code only once  on mode switch
-      lastmode = Radio_mode.selectedOption();
+
+
+
+
+  if (currentMode == 0 || currentMode == 1 ) {  // Override - OFF
+
+    if (lastmode != currentMode) {  // execute code only once  on mode switch
+      lastmode = currentMode;
       Serial.print("Selected mode: ");
-      Serial.println(Radio_mode.selectedOption());
+      Serial.println(currentMode);
       pinMode_function(relayPin, LOW);
     }
 
 
 
-  } else if (Radio_mode.selectedOption() == 1) {    // Override - ON
-    if (lastmode != Radio_mode.selectedOption()) {  // execute code only once on mode switch
-      lastmode = Radio_mode.selectedOption();
+  } else if (currentMode == 2) {    // Override - ON
+    if (lastmode != currentMode) {  // execute code only once on mode switch
+      lastmode = currentMode;
       Serial.print("Selected mode: ");
-      Serial.println(Radio_mode.selectedOption());
+      Serial.println(currentMode);
       pinMode_function(relayPin, HIGH);
     }
   }
 
 
 
-  else if (Radio_mode.selectedOption() == 2) {  // Automatic schedule
+  else if (currentMode == 3) {  // Automatic schedule
 
     for (int i = 0; i < 24; i++) {  // Update UI for current schedule
       Set_schedule[i].setValue(schedule[i] ? "✔️" : "❌");
@@ -670,11 +693,11 @@ void loop() {
   }
 
 
-  else if (Radio_mode.selectedOption() == 3) {      // Override - Delayed Timer
-    if (lastmode != Radio_mode.selectedOption()) {  // execute code only once on mode switch
-      lastmode = Radio_mode.selectedOption();
+  else if (currentMode == 4) {      // Override - Delayed Timer
+    if (lastmode != currentMode) {  // execute code only once on mode switch
+      lastmode = currentMode;
       Serial.print("Selected mode: ");
-      Serial.println(Radio_mode.selectedOption());
+      Serial.println(currentMode);
       pinMode_function(relayPin, HIGH);
       timerduration = 0;  // reset timer
     }
@@ -720,9 +743,44 @@ void loop() {
 
   Relay_enabled_status.setValue((relay_status == HIGH) ? "<span style=\"background-color:rgba(0,128,0,1); \">Relay Status: Enabled</span>" : "<span style=\"background-color:rgba(255,0,0,1); \">Relay Status: Disabled</span>", true);
 
+
+  // Calling fuctions to handles webserver and Memory issues and other soft locks
+
+
+
+
+  if (hour(local) == 12 && minute(local) == 35) {  // reboot at 12:00 pm
+    Serial.println("Automatic Reboot in 60 seconds");
+    delay(60000);   // ensure wont reboot twice in the same minute
+    ESP.restart();  //
+  } else if (schedule[13]) {
+  }
+
+
   delay(1);
 }
 
+
+void selectMode() {
+
+
+  switch (currentMode) {  // duration in minutes * converation factor to ms
+    case 1:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Override - Off</h4>", true);
+      break;
+    case 2:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Override - On</h4>", true);
+      break;
+    case 3:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Automatic schedule</h4>", true);
+      break;
+    case 4:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Delayed Timer</h4>", true);
+      break;
+
+      // use case to set to text
+  }
+}
 
 
 // Functions below required for NTB timer server sync
@@ -792,4 +850,25 @@ void loadSchedule() {
 
 
   preferences.end();  // Close namespace
+}
+
+
+
+void saveMode() {
+  preferences.begin("mode", false);
+  preferences.putInt("currentMode", currentMode);
+  preferences.end();
+  Serial.println("Mode saved");
+}
+
+void loadMode() {
+  preferences.begin("mode", true);
+  if (preferences.isKey("currentMode")) {
+    currentMode = preferences.getInt("currentMode", 0);
+    selectMode();
+  } else {
+    Serial.println("Failed to load from EEPROM");
+    currentMode = 0;  // Set a default value
+  }
+  preferences.end();
 }
