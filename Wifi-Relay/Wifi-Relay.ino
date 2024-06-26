@@ -8,6 +8,8 @@
 
 #include <Preferences.h>
 
+#include <ESP8266HTTPClient.h>
+
 Preferences preferences;
 
 // Replace with your network credentials
@@ -20,6 +22,8 @@ const char* password = "testtest";
 
 int lastmode = 100;
 int currentMode = 0;
+int HeartBeat = 0;
+int lastbeat = 0;
 
 // NTP Server
 const char* ntpServer = "nz.pool.ntp.org";
@@ -41,8 +45,10 @@ byte packetBuffer[NTP_PACKET_SIZE];  // Buffer to hold incoming and outgoing pac
 time_t getNtpTime();
 void sendNTPpacket(IPAddress& address);
 
-int currentHour = 0;  // Variable to store the current hour in 24-hour format
+  char date_str[32] = "";
 
+int currentHour = 0;  // Variable to store the current hour in 24-hour format
+int currentMinutes = 0;
 // 24 hours array
 bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Initialize with all hours OFF
 
@@ -55,6 +61,8 @@ int timepassed = 0;
 int timerduration = 0;
 
 bool relay_status = 0;
+
+int WebErrorCount = 0;  // Variable to track the amount of web fails
 
 // Radio selector for mode select
 const char* modes[] = { "hidden", "Override - Off", "Override - On", "Automatic schedule", "Delayed Timer" };
@@ -463,14 +471,14 @@ MAKE_EmbAJAXPage(
   &Current_time_status,
   new EmbAJAXStatic("</td></tr></center></table>"),
   new EmbAJAXStatic(
-  "    <script>"
+    "    <script>"
     // Hide the element with ID 'mode0'
-  "    document.getElementById('mode0').style.display = 'none';"
+    "    document.getElementById('mode0').style.display = 'none';"
     // Hide the corresponding label
-  "    var label = document.querySelector('label[for=\"mode0\"]');"
-  "    if (label) {"
-  "    label.style.display = 'none';"
-  "    }</script>"));
+    "    var label = document.querySelector('label[for=\"mode0\"]');"
+    "    if (label) {"
+    "    label.style.display = 'none';"
+    "    }</script>"));
 
 
 
@@ -496,7 +504,7 @@ void setup() {
   loadMode();
   // Setup Network
   Serial.begin(115200);
-  delay(1000);
+  delay(1500);
   WiFi.begin(ssid, password);  // Connect to WiFi
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -504,7 +512,6 @@ void setup() {
   }
   Serial.println("");
   Serial.println("WiFi connected");
-  delay(5000);
   Serial.println("ESP8266 IP Address: ");
   Serial.println(WiFi.localIP());  // Print the IP address to Serial Monitor
   Serial.println("WiFi status: " + String(WiFi.status()));
@@ -515,15 +522,17 @@ void setup() {
   Serial.println(Udp.localPort());
   Serial.println("Waiting for sync");
   setSyncProvider(getNtpTime);
-  setSyncInterval(360);
+  //setSyncInterval(86400);  // one hour
+  setSyncInterval(60);
 
-
+  lastbeat = millis();
 
   // Create Pages
 
   driver.installPage(&page, "/", updateUI);
   server.begin();
-
+  Serial.println("Webserver started");
+  delay(10);
   updateUI();  // init displays
 }
 
@@ -544,8 +553,6 @@ void updateUI() {
   // Automatic Display Control
 
   hours_contents.setVisible(currentMode == 3);
-
-
 
 
   if (m_button_schedule_Set.status() == EmbAJAXMomentaryButton::Pressed) {
@@ -640,8 +647,20 @@ void updateUI() {
 
 
 void loop() {
-  // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
-  driver.loopHook();
+
+
+  // Check the webserver is still working and also helps to save CPU cycles
+  if (currentMinutes == 40) {
+    WebServerTest();
+    checkWiFi();
+  }
+
+  if (WebErrorCount == 1 and millis() == 60000) {
+    ESP.restart();
+  }
+
+
+
 
   unsigned long seconds_remaining = timerduration / 1000;
   unsigned long minutes_remaining = seconds_remaining / 60;
@@ -651,11 +670,16 @@ void loop() {
   char formattedTime_remaining[9] = " ";  // HH:MM:SS\0
   sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
 
+  Remaining_Timer.setValue((const char*)formattedTime_remaining);
 
 
 
 
-  if (currentMode == 0 || currentMode == 1 ) {  // Override - OFF
+  // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+  driver.loopHook();
+
+
+  if (currentMode == 0 || currentMode == 1) {  // Override - OFF
 
     if (lastmode != currentMode) {  // execute code only once  on mode switch
       lastmode = currentMode;
@@ -713,6 +737,7 @@ void loop() {
       Serial.print("Remaining duration: ");
       Serial.println(formattedTime_remaining);
 
+
       if (timerduration < 1000) {
 
         timerduration = 0;  // provent int overflow
@@ -731,33 +756,38 @@ void loop() {
   }
 
 
-  char date_str[32] = "";
-  time_t utc = now();
-  time_t local = nz.toLocal(utc);
-  currentHour = hour(local);  // Update the current hour variable
-  sprintf(date_str, "%04d-%02d-%02d %02d:%02d", year(local), month(local), day(local), hour(local), minute(local));
 
 
-  Current_time_status.setValue(date_str);
-  Remaining_Timer.setValue(formattedTime_remaining);
+  timestring(); 
+
 
   Relay_enabled_status.setValue((relay_status == HIGH) ? "<span style=\"background-color:rgba(0,128,0,1); \">Relay Status: Enabled</span>" : "<span style=\"background-color:rgba(255,0,0,1); \">Relay Status: Disabled</span>", true);
 
 
+
+
+
+
+
+
+
   // Calling fuctions to handles webserver and Memory issues and other soft locks
 
-
-
-
-  if (hour(local) == 12 && minute(local) == 35) {  // reboot at 12:00 pm
+  if (currentHour == 12 && currentMinutes == 5) {  // reboot at 12:05 pm
     Serial.println("Automatic Reboot in 60 seconds");
     delay(60000);   // ensure wont reboot twice in the same minute
     ESP.restart();  //
-  } else if (schedule[13]) {
   }
 
 
-  delay(1);
+
+
+
+  if (millis() - HeartBeat >= 1000) {
+    HeartBeat = millis();
+    Serial.print("HeartBeat: ");
+      Serial.println(date_str);
+  }
 }
 
 
@@ -783,13 +813,16 @@ void selectMode() {
 }
 
 
+
+
 // Functions below required for NTB timer server sync
 time_t getNtpTime() {
-  IPAddress ntpServerIP;
+  IPAddress ntpServerIP;  // NTP server's ip address
 
   while (Udp.parsePacket() > 0)
-    ;  // Discard any previously received packets
+    ;  // discard any previously received packets
   Serial.println("Transmit NTP Request");
+  // get a random server from the pool
   WiFi.hostByName(ntpServerName, ntpServerIP);
   Serial.print(ntpServerName);
   Serial.print(": ");
@@ -800,8 +833,9 @@ time_t getNtpTime() {
     int size = Udp.parsePacket();
     if (size >= NTP_PACKET_SIZE) {
       Serial.println("Receive NTP Response");
-      Udp.read(packetBuffer, NTP_PACKET_SIZE);
+      Udp.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
       unsigned long secsSince1900;
+      // convert four bytes starting at location 40 to a long integer
       secsSince1900 = (unsigned long)packetBuffer[40] << 24;
       secsSince1900 |= (unsigned long)packetBuffer[41] << 16;
       secsSince1900 |= (unsigned long)packetBuffer[42] << 8;
@@ -810,24 +844,30 @@ time_t getNtpTime() {
     }
   }
   Serial.println("No NTP Response :-(");
-  return 0;
+  return 0;  // return 0 if unable to get the time
 }
 
+// send an NTP request to the time server at the given address
 void sendNTPpacket(IPAddress& address) {
+  // set all bytes in the buffer to 0
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
-  packetBuffer[0] = 0b11100011;
-  packetBuffer[1] = 0;
-  packetBuffer[2] = 6;
-  packetBuffer[3] = 0xEC;
+  // Initialize values needed to form NTP request
+  // (see URL above for details on the packets)
+  packetBuffer[0] = 0b11100011;  // LI, Version, Mode
+  packetBuffer[1] = 0;           // Stratum, or type of clock
+  packetBuffer[2] = 6;           // Polling Interval
+  packetBuffer[3] = 0xEC;        // Peer Clock Precision
+  // 8 bytes of zero for Root Delay & Root Dispersion
   packetBuffer[12] = 49;
   packetBuffer[13] = 0x4E;
   packetBuffer[14] = 49;
   packetBuffer[15] = 52;
-  Udp.beginPacket(address, 123);
+  // all NTP fields have been given values, now
+  // you can send a packet requesting a timestamp:
+  Udp.beginPacket(address, 123);  //NTP requests are to port 123
   Udp.write(packetBuffer, NTP_PACKET_SIZE);
   Udp.endPacket();
 }
-
 
 
 // Fuctions below are required for storage NVM control
@@ -871,4 +911,72 @@ void loadMode() {
     currentMode = 0;  // Set a default value
   }
   preferences.end();
+}
+
+
+
+
+// ensure
+void checkWiFi() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Reconnecting to WiFi...");
+    WiFi.disconnect();
+    WiFi.begin(ssid, password);
+    
+    unsigned long startAttemptTime = millis();
+    
+    while (WiFi.status() != WL_CONNECTED) {
+      if (millis() - startAttemptTime >= 60000) { // 60 seconds timeout
+        Serial.println("\nFailed to reconnect to WiFi within 60 seconds.");
+        return; // Exit the function
+      }
+      delay(500);
+      Serial.print(".");
+    }
+    
+    Serial.println("\nReconnected to WiFi");
+  }
+}
+
+// ensures if the webserver stays operational
+
+// Ensure the webserver stays operational
+void WebServerTest() {
+  Serial.println("Testing webserver status");
+
+  WiFiClient client;  // Create a WiFiClient object
+  HTTPClient http;
+  http.begin(client, "http://localhost/");  // Use the new method with WiFiClient
+  int httpCode = http.GET();
+  http.end();
+
+  if (httpCode != HTTP_CODE_OK) {
+    Serial.println("Webserver Status: ERROR");
+    Serial.print("Unexpected HTTP code: ");
+    Serial.println(httpCode);
+    WebErrorCount = WebErrorCount + 1;
+    server.stop();
+    delay(1000);  // Optional: small delay to ensure the server stops completely
+    server.begin();
+    delay(5000);
+    Serial.println("Webserver restarted");
+
+  } else {
+    Serial.println("Webserver Status: OK");
+  }
+}
+
+
+
+void timestring() {
+
+
+
+  time_t utc = now();
+  time_t local = nz.toLocal(utc);
+  currentHour = hour(local);  // Update the current hour variable
+  currentMinutes = minute(local);
+  sprintf(date_str, "%04d-%02d-%02d %02d:%02d", year(local), month(local), day(local), hour(local), minute(local));
+  Current_time_status.setValue(date_str);
+
 }
