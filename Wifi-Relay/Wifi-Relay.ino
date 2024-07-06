@@ -683,7 +683,7 @@ void loop() {
 
   if (millis() - statuscheck >= 60000) {
     statuscheck = millis();
-    WebServerTest();  // Function Broken currently
+    WebServerTest();  // Function Broken currently allways returns code -1 
     checkWiFi();
   }
 
