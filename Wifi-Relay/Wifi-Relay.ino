@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <EmbAJAX.h>
+#include <EmbAJAXScriptedSpan.h>
 
 //#include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -24,6 +25,7 @@ int lastmode = 100;
 int currentMode = 0;
 int HeartBeat = 0;
 int lastbeat = 0;
+int statuscheck = 0;
 
 // NTP Server
 const char* ntpServer = "nz.pool.ntp.org";
@@ -45,7 +47,7 @@ byte packetBuffer[NTP_PACKET_SIZE];  // Buffer to hold incoming and outgoing pac
 time_t getNtpTime();
 void sendNTPpacket(IPAddress& address);
 
-  char date_str[32] = "";
+char date_str[32] = "";
 
 int currentHour = 0;  // Variable to store the current hour in 24-hour format
 int currentMinutes = 0;
@@ -486,11 +488,15 @@ MAKE_EmbAJAXPage(
 
 
 void pinMode_function(int pin, bool state) {
+
   if (relay_status != state) {
+    updateUI();  // keeps UI updates faster
     relay_status = state;
-    digitalWrite(pin, state);
     Serial.print("Pin State: ");
     Serial.println(state);
+    delay(1000);  // delays required to provent watchdog timer
+    digitalWrite(pin, state);
+    delay(4000);
   }
 }
 
@@ -499,41 +505,45 @@ void setup() {
   pinMode(relayPin, OUTPUT);        // Set relay pin as output
   pinMode_function(relayPin, LOW);  // Initialize relay to off
 
-  Serial.println("Schedule Saved to EEPROM");
-  loadSchedule();  // load schedule array from NVM
-  loadMode();
   // Setup Network
   Serial.begin(115200);
   delay(1500);
+  Serial.println("");
   WiFi.begin(ssid, password);  // Connect to WiFi
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("");
+
+  Serial.println("Schedule loaded to EEPROM");
+
+  loadMode();
+  loadSchedule();  // load schedule array from NVM
+  // ClearState();  // Keep Comneted unless required [will clear set NVM keys]
+
   Serial.println("WiFi connected");
   Serial.println("ESP8266 IP Address: ");
   Serial.println(WiFi.localIP());  // Print the IP address to Serial Monitor
   Serial.println("WiFi status: " + String(WiFi.status()));
-
   Serial.println("Starting UDP");
   Udp.begin(localPort);
   Serial.print("Local port: ");
   Serial.println(Udp.localPort());
   Serial.println("Waiting for sync");
   setSyncProvider(getNtpTime);
-  //setSyncInterval(86400);  // one hour
+  //setSyncInterval(86400);
   setSyncInterval(60);
 
   lastbeat = millis();
 
   // Create Pages
-
+  delay(1000);
   driver.installPage(&page, "/", updateUI);
   server.begin();
   Serial.println("Webserver started");
-  delay(10);
   updateUI();  // init displays
+  WebServerTest(); 
 }
 
 
@@ -635,48 +645,47 @@ void updateUI() {
     Serial.println("Mode updated");
     saveMode();
 
-    //  status_Mode_submit.setValue(itoa(currentMode,status_Mode_submit_b,10));
+    status_Mode_submit.setValue(itoa(currentMode, status_Mode_submit_b, 10));
 
     selectMode();
   }
+
+  Serial.println("updateUI Finished");
 }
 
-// Footer Display
+
 
 
 
 
 void loop() {
+  // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+  driver.loopHook();
 
 
   // Check the webserver is still working and also helps to save CPU cycles
-  if (currentMinutes == 40) {
-    WebServerTest();
+  //if (currentMinutes == 30) {
+
+
+
+  if (millis() - statuscheck >= 60000) {
+    statuscheck = millis();
+    WebServerTest();  // Function Broken currently
     checkWiFi();
   }
 
-  if (WebErrorCount == 1 and millis() == 60000) {
-    ESP.restart();
-  }
+
+
+  // }
+
+  // if (WebErrorCount == 2 and millis() >= 60000) {
+
+  //   Serial.println("Web Error");
+  //   ESP.restart();
+  // }
 
 
 
-
-  unsigned long seconds_remaining = timerduration / 1000;
-  unsigned long minutes_remaining = seconds_remaining / 60;
-  unsigned long hours_remaining = minutes_remaining / 60;
-  seconds_remaining = seconds_remaining % 60;
-  minutes_remaining = minutes_remaining % 60;
-  char formattedTime_remaining[9] = " ";  // HH:MM:SS\0
-  sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
-
-  Remaining_Timer.setValue((const char*)formattedTime_remaining);
-
-
-
-
-  // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
-  driver.loopHook();
 
 
   if (currentMode == 0 || currentMode == 1) {  // Override - OFF
@@ -722,12 +731,39 @@ void loop() {
       lastmode = currentMode;
       Serial.print("Selected mode: ");
       Serial.println(currentMode);
-      pinMode_function(relayPin, HIGH);
+      pinMode_function(relayPin, LOW);
       timerduration = 0;  // reset timer
     }
 
     currenttime = millis();
     timepassed = currenttime - starttime;
+
+
+
+
+    unsigned long seconds_remaining = timerduration / 1000;
+    unsigned long minutes_remaining = seconds_remaining / 60;
+    unsigned long hours_remaining = minutes_remaining / 60;
+    seconds_remaining = seconds_remaining % 60;
+    minutes_remaining = minutes_remaining % 60;
+    char formattedTime_remaining[10] = "HH:MM:SS";  // HH:MM:SS\0 
+    
+  //  char formattedTime_remaining[9] = "HH:MM:SS";  // HH:MM:SS\0 
+  //   2024-07-06 14:04
+    char formattedTime_remaining_buff[BUFLEN];
+    sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
+
+
+
+
+  Remaining_Timer.setValue((const char*)formattedTime_remaining);
+
+
+   
+     //Remaining_Timer.setValue(formattedTime_remaining);
+   //Remaining_Timer.setValue(strncpy(formattedTime_remaining,formattedTime_remaining,BUFLEN),true);
+
+
 
 
 
@@ -758,7 +794,7 @@ void loop() {
 
 
 
-  timestring(); 
+  timestring();
 
 
   Relay_enabled_status.setValue((relay_status == HIGH) ? "<span style=\"background-color:rgba(0,128,0,1); \">Relay Status: Enabled</span>" : "<span style=\"background-color:rgba(255,0,0,1); \">Relay Status: Disabled</span>", true);
@@ -773,10 +809,11 @@ void loop() {
 
   // Calling fuctions to handles webserver and Memory issues and other soft locks
 
-  if (currentHour == 12 && currentMinutes == 5) {  // reboot at 12:05 pm
+  if (currentHour == 11 && currentMinutes == 59) {  // reboot at 11:59 am
+    pinMode_function(relayPin, LOW);
     Serial.println("Automatic Reboot in 60 seconds");
-    delay(60000);   // ensure wont reboot twice in the same minute
-    ESP.restart();  //
+    delay(1200000);  // ensure wont reboot twice in the same minute
+    ESP.restart();   //
   }
 
 
@@ -786,15 +823,16 @@ void loop() {
   if (millis() - HeartBeat >= 1000) {
     HeartBeat = millis();
     Serial.print("HeartBeat: ");
-      Serial.println(date_str);
+    Serial.println(date_str);
   }
+  delay(1);
 }
 
 
 void selectMode() {
 
 
-  switch (currentMode) {  // duration in minutes * converation factor to ms
+  switch (currentMode) {
     case 1:
       status_Mode_submit.setValue("<br><h4>Current Mode: Override - Off</h4>", true);
       break;
@@ -807,8 +845,6 @@ void selectMode() {
     case 4:
       status_Mode_submit.setValue("<br><h4>Current Mode: Delayed Timer</h4>", true);
       break;
-
-      // use case to set to text
   }
 }
 
@@ -875,7 +911,8 @@ void sendNTPpacket(IPAddress& address) {
 void saveSchedule() {
   preferences.begin("schedule", false);                          // Open namespace "schedule"
   preferences.putBytes("schedule", schedule, sizeof(schedule));  // Save schedule array
-  preferences.end();                                             // Close namespace
+  preferences.end();
+  delay(250);  // Close namespace
 }
 
 void loadSchedule() {
@@ -890,6 +927,7 @@ void loadSchedule() {
 
 
   preferences.end();  // Close namespace
+  delay(250);
 }
 
 
@@ -899,6 +937,7 @@ void saveMode() {
   preferences.putInt("currentMode", currentMode);
   preferences.end();
   Serial.println("Mode saved");
+  delay(250);
 }
 
 void loadMode() {
@@ -911,9 +950,24 @@ void loadMode() {
     currentMode = 0;  // Set a default value
   }
   preferences.end();
+  delay(250);
 }
 
+void ClearState() {
+  Serial.println("Clearing Saved keys");
+  preferences.begin("mode", false);
+  preferences.clear();
+  preferences.end();
 
+
+  preferences.begin("schedule", false);
+  preferences.clear();
+  preferences.end();
+
+
+  currentMode = 0;
+  bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+}
 
 
 // ensure
@@ -922,18 +976,18 @@ void checkWiFi() {
     Serial.println("Reconnecting to WiFi...");
     WiFi.disconnect();
     WiFi.begin(ssid, password);
-    
+
     unsigned long startAttemptTime = millis();
-    
+
     while (WiFi.status() != WL_CONNECTED) {
-      if (millis() - startAttemptTime >= 60000) { // 60 seconds timeout
+      if (millis() - startAttemptTime >= 60000) {  // 60 seconds timeout
         Serial.println("\nFailed to reconnect to WiFi within 60 seconds.");
-        return; // Exit the function
+        return;  // Exit the function
       }
       delay(500);
       Serial.print(".");
     }
-    
+
     Serial.println("\nReconnected to WiFi");
   }
 }
@@ -942,11 +996,14 @@ void checkWiFi() {
 
 // Ensure the webserver stays operational
 void WebServerTest() {
+  driver.loopHook();
   Serial.println("Testing webserver status");
 
   WiFiClient client;  // Create a WiFiClient object
   HTTPClient http;
-  http.begin(client, "http://localhost/");  // Use the new method with WiFiClient
+  String serverAddress = "http://" + WiFi.localIP().toString() + "/";
+
+  http.begin(client, serverAddress);  // Use the new method with WiFiClient
   int httpCode = http.GET();
   http.end();
 
@@ -956,9 +1013,8 @@ void WebServerTest() {
     Serial.println(httpCode);
     WebErrorCount = WebErrorCount + 1;
     server.stop();
-    delay(1000);  // Optional: small delay to ensure the server stops completely
     server.begin();
-    delay(5000);
+    delay(100);  // Give the server some time to start
     Serial.println("Webserver restarted");
 
   } else {
@@ -978,5 +1034,4 @@ void timestring() {
   currentMinutes = minute(local);
   sprintf(date_str, "%04d-%02d-%02d %02d:%02d", year(local), month(local), day(local), hour(local), minute(local));
   Current_time_status.setValue(date_str);
-
 }
