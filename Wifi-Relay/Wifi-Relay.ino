@@ -543,7 +543,7 @@ void setup() {
   server.begin();
   Serial.println("Webserver started");
   updateUI();  // init displays
-  WebServerTest(); 
+  WebServerTest();
 }
 
 
@@ -659,6 +659,19 @@ void updateUI() {
 
 
 void loop() {
+
+  unsigned long seconds_remaining = timerduration / 1000;
+  unsigned long minutes_remaining = seconds_remaining / 60;
+  unsigned long hours_remaining = minutes_remaining / 60;
+  seconds_remaining = seconds_remaining % 60;
+  minutes_remaining = minutes_remaining % 60;
+  char formattedTime_remaining[9] = " ";  // HH:MM:SS\0
+  sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
+
+
+
+
+
   // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
   driver.loopHook();
 
@@ -741,27 +754,15 @@ void loop() {
 
 
 
-    unsigned long seconds_remaining = timerduration / 1000;
-    unsigned long minutes_remaining = seconds_remaining / 60;
-    unsigned long hours_remaining = minutes_remaining / 60;
-    seconds_remaining = seconds_remaining % 60;
-    minutes_remaining = minutes_remaining % 60;
-    char formattedTime_remaining[10] = "HH:MM:SS";  // HH:MM:SS\0 
-    
-  //  char formattedTime_remaining[9] = "HH:MM:SS";  // HH:MM:SS\0 
-  //   2024-07-06 14:04
-    char formattedTime_remaining_buff[BUFLEN];
-    sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
+    Remaining_Timer.setValue(formattedTime_remaining);
+
+    //  Remaining_Timer.setValue((const char*) formattedTime_remaining);
 
 
 
 
-  Remaining_Timer.setValue((const char*)formattedTime_remaining);
-
-
-   
-     //Remaining_Timer.setValue(formattedTime_remaining);
-   //Remaining_Timer.setValue(strncpy(formattedTime_remaining,formattedTime_remaining,BUFLEN),true);
+    //Remaining_Timer.setValue(formattedTime_remaining);
+    //Remaining_Timer.setValue(strncpy(formattedTime_remaining,formattedTime_remaining,BUFLEN),true);
 
 
 
@@ -782,12 +783,12 @@ void loop() {
       }
     }
 
-    if (timerduration != 0) {
-
-      pinMode_function(relayPin, HIGH);
-    } else {
+    if (timerduration == 0) {
       pinMode_function(relayPin, LOW);
       Remaining_Timer.setValue("No Timer");
+
+    } else {
+      pinMode_function(relayPin, HIGH);
     }
   }
 
@@ -820,7 +821,7 @@ void loop() {
 
 
 
-  if (millis() - HeartBeat >= 1000) {
+  if (millis() - HeartBeat >= 10000) {
     HeartBeat = millis();
     Serial.print("HeartBeat: ");
     Serial.println(date_str);
