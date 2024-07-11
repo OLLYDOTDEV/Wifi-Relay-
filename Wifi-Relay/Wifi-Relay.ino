@@ -543,7 +543,6 @@ void setup() {
   server.begin();
   Serial.println("Webserver started");
   updateUI();  // init displays
-  WebServerTest();
 }
 
 
@@ -681,9 +680,11 @@ void loop() {
 
 
 
-  if (millis() - statuscheck >= 60000) {
+  if (millis() - statuscheck >= 30000) {
     statuscheck = millis();
-    WebServerTest();  // Function Broken currently allways returns code -1 
+    Serial.println("Restarting Webserver...");
+    server.stop();
+    server.begin();
     checkWiFi();
   }
 
@@ -992,38 +993,6 @@ void checkWiFi() {
     Serial.println("\nReconnected to WiFi");
   }
 }
-
-// ensures if the webserver stays operational
-
-// Ensure the webserver stays operational
-void WebServerTest() {
-  driver.loopHook();
-  Serial.println("Testing webserver status");
-
-  WiFiClient client;  // Create a WiFiClient object
-  HTTPClient http;
-  String serverAddress = "http://" + WiFi.localIP().toString() + "/";
-
-  http.begin(client, serverAddress);  // Use the new method with WiFiClient
-  int httpCode = http.GET();
-  http.end();
-
-  if (httpCode != HTTP_CODE_OK) {
-    Serial.println("Webserver Status: ERROR");
-    Serial.print("Unexpected HTTP code: ");
-    Serial.println(httpCode);
-    WebErrorCount = WebErrorCount + 1;
-    server.stop();
-    server.begin();
-    delay(100);  // Give the server some time to start
-    Serial.println("Webserver restarted");
-
-  } else {
-    Serial.println("Webserver Status: OK");
-  }
-}
-
-
 
 void timestring() {
 

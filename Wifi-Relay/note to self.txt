@@ -1,2 +1,2 @@
-Project just need assembling.
-Code in a mostly working state just need a little bit more testing on checking if it still hads the odd crash with the new hardware
+Project ready. Brute forced a fix to the server timeout by for restarting the websever.
+Also once if a while on powerup it doesnt fully connect to wifi. given time this does self solve
