@@ -70,6 +70,150 @@ bool relay_status = 0;
 
 int WebErrorCount = 0;  // Variable to track the amount of web fails
 
+
+EmbAJAXMomentaryButton m_button_schedule_Set("Set_schedule", "Set Schedule");  // Timer set
+
+EmbAJAXStatic nextCell("</td><td>&nbsp;</td><td>");
+EmbAJAXStatic nextRow("</div></td></tr><tr><td>");
+
+EmbAJAXCheckButton hours[] = {
+
+  EmbAJAXCheckButton("Hours0", "12:00 AM - 01:00 AM"),
+  EmbAJAXCheckButton("Hours1", "01:00 AM - 02:00 AM"),
+  EmbAJAXCheckButton("Hours2", "02:00 AM - 03:00 AM"),
+  EmbAJAXCheckButton("Hours3", "03:00 AM - 04:00 AM"),
+  EmbAJAXCheckButton("Hours4", "04:00 AM - 05:00 AM"),
+  EmbAJAXCheckButton("Hours5", "05:00 AM - 06:00 AM"),
+  EmbAJAXCheckButton("Hours6", "06:00 AM - 07:00 AM"),
+  EmbAJAXCheckButton("Hours7", "07:00 AM - 08:00 AM"),
+  EmbAJAXCheckButton("Hours8", "08:00 AM - 09:00 AM"),
+  EmbAJAXCheckButton("Hours9", "09:00 AM - 10:00 AM"),
+  EmbAJAXCheckButton("Hours10", "10:00 AM - 11:00 AM"),
+  EmbAJAXCheckButton("Hours11", "11:00 AM - 12:00 PM"),
+  EmbAJAXCheckButton("Hours12", "12:00 PM - 01:00 PM"),
+  EmbAJAXCheckButton("Hours13", "01:00 PM - 02:00 PM"),
+  EmbAJAXCheckButton("Hours14", "02:00 PM - 03:00 PM"),
+  EmbAJAXCheckButton("Hours15", "03:00 PM - 04:00 PM"),
+  EmbAJAXCheckButton("Hours16", "04:00 PM - 05:00 PM"),
+  EmbAJAXCheckButton("Hours17", "05:00 PM - 06:00 PM"),
+  EmbAJAXCheckButton("Hours18", "06:00 PM - 07:00 PM"),
+  EmbAJAXCheckButton("Hours19", "07:00 PM - 08:00 PM"),
+  EmbAJAXCheckButton("Hours20", "08:00 PM - 09:00 PM"),
+  EmbAJAXCheckButton("Hours21", "09:00 PM - 10:00 PM"),
+  EmbAJAXCheckButton("Hours22", "10:00 PM - 11:00 PM"),
+  EmbAJAXCheckButton("Hours23", "11:00 PM - 12:00 AM")
+};
+
+EmbAJAXMutableSpan Set_schedule[] = {
+
+  EmbAJAXMutableSpan("Hours0_Set"),
+  EmbAJAXMutableSpan("Hours1_Set"),
+  EmbAJAXMutableSpan("Hours2_Set"),
+  EmbAJAXMutableSpan("Hours3_Set"),
+  EmbAJAXMutableSpan("Hours4_Set"),
+  EmbAJAXMutableSpan("Hours5_Set"),
+  EmbAJAXMutableSpan("Hours6_Set"),
+  EmbAJAXMutableSpan("Hours7_Set"),
+  EmbAJAXMutableSpan("Hours8_Set"),
+  EmbAJAXMutableSpan("Hours9_Set"),
+  EmbAJAXMutableSpan("Hours10_Set"),
+  EmbAJAXMutableSpan("Hours11_Set"),
+  EmbAJAXMutableSpan("Hours12_Set"),
+  EmbAJAXMutableSpan("Hours13_Set"),
+  EmbAJAXMutableSpan("Hours14_Set"),
+  EmbAJAXMutableSpan("Hours15_Set"),
+  EmbAJAXMutableSpan("Hours16_Set"),
+  EmbAJAXMutableSpan("Hours17_Set"),
+  EmbAJAXMutableSpan("Hours18_Set"),
+  EmbAJAXMutableSpan("Hours19_Set"),
+  EmbAJAXMutableSpan("Hours20_Set"),
+  EmbAJAXMutableSpan("Hours21_Set"),
+  EmbAJAXMutableSpan("Hours22_Set"),
+  EmbAJAXMutableSpan("Hours23_Set")
+};
+
+
+
+
+EmbAJAXBase* hours_contents_array[] = {
+  new EmbAJAXStatic("<center><p>Key: </p><p><b>&#x2713;</b> added to schedule</p><p> <b>x</b> removed from schedule </p></center><center><table id=\"schedule\" class=\"schedule\"><caption>Current schedule</caption><tbody><tr><td>"),
+  &Set_schedule[0],
+  &hours[0],
+  &nextCell,
+  &Set_schedule[1],
+  &hours[1],
+  &nextRow,
+  &Set_schedule[2],
+  &hours[2],
+  &nextCell,
+  &Set_schedule[3],
+  &hours[3],
+  &nextRow,
+  &Set_schedule[4],
+  &hours[4],
+  &nextCell,
+  &Set_schedule[5],
+  &hours[5],
+  &nextRow,
+  &Set_schedule[6],
+  &hours[6],
+  &nextCell,
+  &Set_schedule[7],
+  &hours[7],
+  &nextRow,
+  &Set_schedule[8],
+  &hours[8],
+  &nextCell,
+  &Set_schedule[9],
+  &hours[9],
+  &nextRow,
+  &Set_schedule[10],
+  &hours[10],
+  &nextCell,
+  &Set_schedule[11],
+  &hours[11],
+  &nextRow,
+  &Set_schedule[12],
+  &hours[12],
+  &nextCell,
+  &Set_schedule[13],
+  &hours[13],
+  &nextRow,
+  &Set_schedule[14],
+  &hours[14],
+  &nextCell,
+  &Set_schedule[15],
+  &hours[15],
+  &nextRow,
+  &Set_schedule[16],
+  &hours[16],
+  &nextCell,
+  &Set_schedule[17],
+  &hours[17],
+  &nextRow,
+  &Set_schedule[18],
+  &hours[18],
+  &nextCell,
+  &Set_schedule[19],
+  &hours[19],
+  &nextRow,
+  &Set_schedule[20],
+  &hours[20],
+  &nextCell,
+  &Set_schedule[21],
+  &hours[21],
+  &nextRow,
+  &Set_schedule[22],
+  &hours[22],
+  &nextCell,
+  &Set_schedule[23],
+  &hours[23],
+
+  new EmbAJAXStatic("</b></td></tr></table>"),
+  &m_button_schedule_Set,
+  new EmbAJAXStatic("<br></center>")
+};
+
 // Radio selector for mode select
 const char* modes[] = { "hidden", "Override - Off", "Override - On", "Automatic schedule", "Delayed Timer" };
 EmbAJAXRadioGroup<5> Radio_mode("mode", modes);
@@ -97,7 +241,6 @@ EmbAJAXMutableSpan Current_time_status("Current_time");
 char Current_timeM_status_b[BUFLEN];
 char Current_timeH_status_b[BUFLEN];
 EmbAJAXMutableSpan Remaining_Timer("Remaining_Timer_HH_MM");
-
 
 
 void selectMode() {
@@ -225,21 +368,21 @@ void saveMode() {
 
 
 
-void ClearState() {
-  Serial.println("Clearing Saved keys");
-  preferences.begin("mode", false);
-  preferences.clear();
-  preferences.end();
+// void ClearState() {
+//   Serial.println("Clearing Saved keys");
+//   preferences.begin("mode", false);
+//   preferences.clear();
+//   preferences.end();
 
 
-  preferences.begin("schedule", false);
-  preferences.clear();
-  preferences.end();
+//   preferences.begin("schedule", false);
+//   preferences.clear();
+//   preferences.end();
 
 
-  currentMode = 0;
-  bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-}
+//   currentMode = 0;
+//   bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+// }
 
 
 // ensure
@@ -276,219 +419,6 @@ void timestring() {
   Current_time_status.setValue(date_str);
 }
 
-
-
-
-
-
-// Automated
-
-EmbAJAXMomentaryButton m_button_schedule_Set("Set_schedule", "Set Schedule");  // Timer set
-
-EmbAJAXStatic nextCell("</td><td>&nbsp;</td><td>");
-EmbAJAXStatic nextRow("</div></td></tr><tr><td>");
-
-EmbAJAXCheckButton hours[] = {
-
-  EmbAJAXCheckButton("Hours0", "12:00 AM - 01:00 AM"),
-  EmbAJAXCheckButton("Hours1", "01:00 AM - 02:00 AM"),
-  EmbAJAXCheckButton("Hours2", "02:00 AM - 03:00 AM"),
-  EmbAJAXCheckButton("Hours3", "03:00 AM - 04:00 AM"),
-  EmbAJAXCheckButton("Hours4", "04:00 AM - 05:00 AM"),
-  EmbAJAXCheckButton("Hours5", "05:00 AM - 06:00 AM"),
-  EmbAJAXCheckButton("Hours6", "06:00 AM - 07:00 AM"),
-  EmbAJAXCheckButton("Hours7", "07:00 AM - 08:00 AM"),
-  EmbAJAXCheckButton("Hours8", "08:00 AM - 09:00 AM"),
-  EmbAJAXCheckButton("Hours9", "09:00 AM - 10:00 AM"),
-  EmbAJAXCheckButton("Hours10", "10:00 AM - 11:00 AM"),
-  EmbAJAXCheckButton("Hours11", "11:00 AM - 12:00 PM"),
-  EmbAJAXCheckButton("Hours12", "12:00 PM - 01:00 PM"),
-  EmbAJAXCheckButton("Hours13", "01:00 PM - 02:00 PM"),
-  EmbAJAXCheckButton("Hours14", "02:00 PM - 03:00 PM"),
-  EmbAJAXCheckButton("Hours15", "03:00 PM - 04:00 PM"),
-  EmbAJAXCheckButton("Hours16", "04:00 PM - 05:00 PM"),
-  EmbAJAXCheckButton("Hours17", "05:00 PM - 06:00 PM"),
-  EmbAJAXCheckButton("Hours18", "06:00 PM - 07:00 PM"),
-  EmbAJAXCheckButton("Hours19", "07:00 PM - 08:00 PM"),
-  EmbAJAXCheckButton("Hours20", "08:00 PM - 09:00 PM"),
-  EmbAJAXCheckButton("Hours21", "09:00 PM - 10:00 PM"),
-  EmbAJAXCheckButton("Hours22", "10:00 PM - 11:00 PM"),
-  EmbAJAXCheckButton("Hours23", "11:00 PM - 12:00 AM")
-};
-
-EmbAJAXMutableSpan Set_schedule[] = {
-
-  EmbAJAXMutableSpan("Hours0_Set"),
-  EmbAJAXMutableSpan("Hours1_Set"),
-  EmbAJAXMutableSpan("Hours2_Set"),
-  EmbAJAXMutableSpan("Hours3_Set"),
-  EmbAJAXMutableSpan("Hours4_Set"),
-  EmbAJAXMutableSpan("Hours5_Set"),
-  EmbAJAXMutableSpan("Hours6_Set"),
-  EmbAJAXMutableSpan("Hours7_Set"),
-  EmbAJAXMutableSpan("Hours8_Set"),
-  EmbAJAXMutableSpan("Hours9_Set"),
-  EmbAJAXMutableSpan("Hours10_Set"),
-  EmbAJAXMutableSpan("Hours11_Set"),
-  EmbAJAXMutableSpan("Hours12_Set"),
-  EmbAJAXMutableSpan("Hours13_Set"),
-  EmbAJAXMutableSpan("Hours14_Set"),
-  EmbAJAXMutableSpan("Hours15_Set"),
-  EmbAJAXMutableSpan("Hours16_Set"),
-  EmbAJAXMutableSpan("Hours17_Set"),
-  EmbAJAXMutableSpan("Hours18_Set"),
-  EmbAJAXMutableSpan("Hours19_Set"),
-  EmbAJAXMutableSpan("Hours20_Set"),
-  EmbAJAXMutableSpan("Hours21_Set"),
-  EmbAJAXMutableSpan("Hours22_Set"),
-  EmbAJAXMutableSpan("Hours23_Set")
-};
-
-
-EmbAJAXBase* hours_contents_array[] = {
-  new EmbAJAXStatic("<center><p>Key: </p><p><b>&#x2713;</b> added to schedule</p><p> <b>x</b> removed from schedule </p></center><center><table id=\"schedule\" class=\"schedule\"><caption>Current schedule</caption><tbody><tr><td>"),
-  &Set_schedule[0],
-  &hours[0],
-  &nextCell,
-  &Set_schedule[1],
-  &hours[1],
-  &nextRow,
-  &Set_schedule[2],
-  &hours[2],
-  &nextCell,
-  &Set_schedule[3],
-  &hours[3],
-  &nextRow,
-  &Set_schedule[4],
-  &hours[4],
-  &nextCell,
-  &Set_schedule[5],
-  &hours[5],
-  &nextRow,
-  &Set_schedule[6],
-  &hours[6],
-  &nextCell,
-  &Set_schedule[7],
-  &hours[7],
-  &nextRow,
-  &Set_schedule[8],
-  &hours[8],
-  &nextCell,
-  &Set_schedule[9],
-  &hours[9],
-  &nextRow,
-  &Set_schedule[10],
-  &hours[10],
-  &nextCell,
-  &Set_schedule[11],
-  &hours[11],
-  &nextRow,
-  &Set_schedule[12],
-  &hours[12],
-  &nextCell,
-  &Set_schedule[13],
-  &hours[13],
-  &nextRow,
-  &Set_schedule[14],
-  &hours[14],
-  &nextCell,
-  &Set_schedule[15],
-  &hours[15],
-  &nextRow,
-  &Set_schedule[16],
-  &hours[16],
-  &nextCell,
-  &Set_schedule[17],
-  &hours[17],
-  &nextRow,
-  &Set_schedule[18],
-  &hours[18],
-  &nextCell,
-  &Set_schedule[19],
-  &hours[19],
-  &nextRow,
-  &Set_schedule[20],
-  &hours[20],
-  &nextCell,
-  &Set_schedule[21],
-  &hours[21],
-  &nextRow,
-  &Set_schedule[22],
-  &hours[22],
-  &nextCell,
-  &Set_schedule[23],
-  &hours[23],
-
-  new EmbAJAXStatic("</b></td></tr></table>"),
-  &m_button_schedule_Set,
-  new EmbAJAXStatic("<br></center>")
-};
-
-
-
-
-void pinMode_function(int pin, bool state) {
-
-  if (relay_status != state) {
-    updateUI();  // keeps UI updates faster
-    relay_status = state;
-    Serial.print("Pin State: ");
-    Serial.println(state);
-    delay(1000);  // delays required to provent watchdog timer
-    digitalWrite(pin, state);
-    delay(4000);
-  }
-}
-
-
-void setup() {
-  pinMode(relayPin, OUTPUT);        // Set relay pin as output
-  pinMode_function(relayPin, LOW);  // Initialize relay to off
-
-  // Setup Network
-  Serial.begin(115200);
-  delay(1500);
-  Serial.println("");
-  WiFi.begin(ssid, password);  // Connect to WiFi
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-
-  Serial.println("Schedule loaded to EEPROM");
-
-  loadMode();
-  loadSchedule();  // load schedule array from NVM
-  // ClearState();  // Keep Comneted unless required [will clear set NVM keys]
-
-  Serial.println("WiFi connected");
-  Serial.println("ESP8266 IP Address: ");
-  Serial.println(WiFi.localIP());  // Print the IP address to Serial Monitor
-  Serial.println("WiFi status: " + String(WiFi.status()));
-  Serial.println("Starting UDP");
-  Udp.begin(localPort);
-  Serial.print("Local port: ");
-  Serial.println(Udp.localPort());
-  Serial.println("Waiting for sync");
-  setSyncProvider(getNtpTime);
-  //setSyncInterval(86400);
-  setSyncInterval(60);
-
-  lastbeat = millis();
-
-  // Create Pages
-  delay(1000);
-  driver.installPage(&page, "/", updateUI);
-  server.begin();
-  Serial.println("Webserver started");
-  updateUI();  // init displays
-}
-
-
-
-
-
 void updateUI() {
   // Enabled / disable the slider. Note that you could simply do this inside the loop. However,
   // placing it here makes the client UI more responsive (try it).
@@ -523,16 +453,7 @@ void updateUI() {
     saveSchedule();  // Save current schedule
     Serial.println("Schedule save to EEPROM");
   }
-
-
-
-
-
-
-
-
-
-  // Timer  Display Control
+// Timer  Display Control
 
 
   Dropdown_Time.setVisible(currentMode == 4);
@@ -594,145 +515,18 @@ void updateUI() {
 
 
 
+void pinMode_function(int pin, bool state) {
 
-
-
-void loop() {
-
-  unsigned long seconds_remaining = timerduration / 1000;
-  unsigned long minutes_remaining = seconds_remaining / 60;
-  unsigned long hours_remaining = minutes_remaining / 60;
-  seconds_remaining = seconds_remaining % 60;
-  minutes_remaining = minutes_remaining % 60;
-  char formattedTime_remaining[9] = " ";  // HH:MM:SS\0
-  sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
-
-
-
-
-
-  // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
-  driver.loopHook();
-
-
-  // Check the webserver is still working and also helps to save CPU cycles
-  //if (currentMinutes == 30) {
-
-
-
-  if (millis() - statuscheck >= 30000) {
-    statuscheck = millis();
-    Serial.println("Restarting Webserver...");
-    server.stop();
-    server.begin();
-    checkWiFi();
+  if (relay_status != state) {
+    updateUI();  // keeps UI updates faster
+    relay_status = state;
+    Serial.print("Pin State: ");
+    Serial.println(state);
+    delay(1000);  // delays required to provent watchdog timer
+    digitalWrite(pin, state);
+    delay(4000);
   }
-
-
-
-  // }
-
-  // if (WebErrorCount == 2 and millis() >= 60000) {
-
-  //   Serial.println("Web Error");
-  //   ESP.restart();
-  // }
-
-
-
-
-
-  if (currentMode == 0 || currentMode == 1) {  // Override - OFF
-
-    if (lastmode != currentMode) {  // execute code only once  on mode switch
-      lastmode = currentMode;
-      Serial.print("Selected mode: ");
-      Serial.println(currentMode);
-      pinMode_function(relayPin, LOW);
-    }
-
-
-
-  } else if (currentMode == 2) {    // Override - ON
-    if (lastmode != currentMode) {  // execute code only once on mode switch
-      lastmode = currentMode;
-      Serial.print("Selected mode: ");
-      Serial.println(currentMode);
-      pinMode_function(relayPin, HIGH);
-    }
-  }
-
-
-
-  else if (currentMode == 3) {  // Automatic schedule
-
-    for (int i = 0; i < 24; i++) {  // Update UI for current schedule
-      Set_schedule[i].setValue(schedule[i] ? "✔️" : "❌");
-    }
-
-
-    timerduration = 0;  // reset timer
-    if (schedule[currentHour]) {
-      pinMode_function(relayPin, HIGH);  // Turn relay ON
-    } else {
-      pinMode_function(relayPin, LOW);  // Turn relay OFF
-    }
-  }
-
-
-  else if (currentMode == 4) {      // Override - Delayed Timer
-    if (lastmode != currentMode) {  // execute code only once on mode switch
-      lastmode = currentMode;
-      Serial.print("Selected mode: ");
-      Serial.println(currentMode);
-      pinMode_function(relayPin, LOW);
-      timerduration = 0;  // reset timer
-    }
-
-    currenttime = millis();
-    timepassed = currenttime - starttime;
-
-
-
-
-    Remaining_Timer.setValue(formattedTime_remaining);
-
-    //  Remaining_Timer.setValue((const char*) formattedTime_remaining);
-
-
-
-
-    //Remaining_Timer.setValue(formattedTime_remaining);
-    //Remaining_Timer.setValue(strncpy(formattedTime_remaining,formattedTime_remaining,BUFLEN),true);
-
-
-
-
-
-
-    if (timepassed >= 1000 && timerduration != 0) {
-      starttime = millis();
-      Serial.print("Remaining duration: ");
-      Serial.println(formattedTime_remaining);
-
-
-      if (timerduration < 1000) {
-
-        timerduration = 0;  // provent int overflow
-      } else {
-        timerduration = timerduration - 1000;  // decress timer by 1 second
-      }
-    }
-
-    if (timerduration == 0) {
-      pinMode_function(relayPin, LOW);
-      Remaining_Timer.setValue("No Timer");
-
-    } else {
-      pinMode_function(relayPin, HIGH);
-    }
-  }
-
+}
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
 // static HTML. Note: MAKE_EmbAJAXPage is just a convenience macro around the EmbAJAXPage<>-class.
@@ -972,6 +766,208 @@ MAKE_EmbAJAXPage(
     "    if (label) {"
     "    label.style.display = 'none';"
     "    }</script>"));
+
+
+void setup() {
+  pinMode(relayPin, OUTPUT);        // Set relay pin as output
+  pinMode_function(relayPin, LOW);  // Initialize relay to off
+
+  // Setup Network
+  Serial.begin(115200);
+  delay(1500);
+  Serial.println("");
+  WiFi.begin(ssid, password);  // Connect to WiFi
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+
+  Serial.println("Schedule loaded to EEPROM");
+
+  loadMode();
+  loadSchedule();  // load schedule array from NVM
+  // ClearState();  // Keep Comneted unless required [will clear set NVM keys]
+
+  Serial.println("WiFi connected");
+  Serial.println("ESP8266 IP Address: ");
+  Serial.println(WiFi.localIP());  // Print the IP address to Serial Monitor
+  Serial.println("WiFi status: " + String(WiFi.status()));
+  Serial.println("Starting UDP");
+  Udp.begin(localPort);
+  Serial.print("Local port: ");
+  Serial.println(Udp.localPort());
+  Serial.println("Waiting for sync");
+  setSyncProvider(getNtpTime);
+  //setSyncInterval(86400);
+  setSyncInterval(60);
+
+  lastbeat = millis();
+
+  // Create Pages
+  delay(1000);
+  driver.installPage(&page, "/", updateUI);
+  server.begin();
+  Serial.println("Webserver started");
+  updateUI();  // init displays
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+void loop() {
+
+  unsigned long seconds_remaining = timerduration / 1000;
+  unsigned long minutes_remaining = seconds_remaining / 60;
+  unsigned long hours_remaining = minutes_remaining / 60;
+  seconds_remaining = seconds_remaining % 60;
+  minutes_remaining = minutes_remaining % 60;
+  char formattedTime_remaining[9] = " ";  // HH:MM:SS\0
+  sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
+
+
+
+
+
+  // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+  driver.loopHook();
+
+
+  // Check the webserver is still working and also helps to save CPU cycles
+  //if (currentMinutes == 30) {
+
+
+
+  if (millis() - statuscheck >= 30000) {
+    statuscheck = millis();
+    Serial.println("Restarting Webserver...");
+    server.stop();
+    server.begin();
+    checkWiFi();
+  }
+
+
+
+  // }
+
+  // if (WebErrorCount == 2 and millis() >= 60000) {
+
+  //   Serial.println("Web Error");
+  //   ESP.restart();
+  // }
+
+
+
+
+
+  if (currentMode == 0 || currentMode == 1) {  // Override - OFF
+
+    if (lastmode != currentMode) {  // execute code only once  on mode switch
+      lastmode = currentMode;
+      Serial.print("Selected mode: ");
+      Serial.println(currentMode);
+      pinMode_function(relayPin, LOW);
+    }
+
+
+
+  } else if (currentMode == 2) {    // Override - ON
+    if (lastmode != currentMode) {  // execute code only once on mode switch
+      lastmode = currentMode;
+      Serial.print("Selected mode: ");
+      Serial.println(currentMode);
+      pinMode_function(relayPin, HIGH);
+    }
+  }
+
+
+
+  else if (currentMode == 3) {  // Automatic schedule
+
+    for (int i = 0; i < 24; i++) {  // Update UI for current schedule
+      Set_schedule[i].setValue(schedule[i] ? "✔️" : "❌");
+    }
+
+
+    timerduration = 0;  // reset timer
+    if (schedule[currentHour]) {
+      pinMode_function(relayPin, HIGH);  // Turn relay ON
+    } else {
+      pinMode_function(relayPin, LOW);  // Turn relay OFF
+    }
+  }
+
+
+  else if (currentMode == 4) {      // Override - Delayed Timer
+    if (lastmode != currentMode) {  // execute code only once on mode switch
+      lastmode = currentMode;
+      Serial.print("Selected mode: ");
+      Serial.println(currentMode);
+      pinMode_function(relayPin, LOW);
+      timerduration = 0;  // reset timer
+    }
+
+    currenttime = millis();
+    timepassed = currenttime - starttime;
+
+
+
+
+    Remaining_Timer.setValue(formattedTime_remaining);
+
+    //  Remaining_Timer.setValue((const char*) formattedTime_remaining);
+
+
+
+
+    //Remaining_Timer.setValue(formattedTime_remaining);
+    //Remaining_Timer.setValue(strncpy(formattedTime_remaining,formattedTime_remaining,BUFLEN),true);
+
+
+
+
+
+
+    if (timepassed >= 1000 && timerduration != 0) {
+      starttime = millis();
+      Serial.print("Remaining duration: ");
+      Serial.println(formattedTime_remaining);
+
+
+      if (timerduration < 1000) {
+
+        timerduration = 0;  // provent int overflow
+      } else {
+        timerduration = timerduration - 1000;  // decress timer by 1 second
+      }
+    }
+
+    if (timerduration == 0) {
+      pinMode_function(relayPin, LOW);
+      Remaining_Timer.setValue("No Timer");
+
+    } else {
+      pinMode_function(relayPin, HIGH);
+    }
+  }
+
+
+
 
 
 
