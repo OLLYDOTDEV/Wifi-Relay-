@@ -5,7 +5,6 @@
 #include <EmbAJAX.h>
 #include <EmbAJAXScriptedSpan.h>
 
-//#include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <Timezone.h>  // https://github.com/JChristensen/Timezone
 #include <TimeLib.h>
@@ -17,8 +16,8 @@
 Preferences preferences;
 
 // Replace with your network credentials
-const char* ssid = "testtest";
-const char* password = "testtest";
+const char* ssid = "Test";
+const char* password = "Test";
 
 #define relayPin 5  // GPIO5 connected to relay control pin
 
@@ -812,24 +811,6 @@ void setup() {
   updateUI();  // init displays
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
 void loop() {
 
   unsigned long seconds_remaining = timerduration / 1000;
@@ -837,21 +818,14 @@ void loop() {
   unsigned long hours_remaining = minutes_remaining / 60;
   seconds_remaining = seconds_remaining % 60;
   minutes_remaining = minutes_remaining % 60;
-  char formattedTime_remaining[9] = " ";  // HH:MM:SS\0
+  char formattedTime_remaining[16] = " ";  // HH:MM:SS\0
   sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
-
-
-
-
 
   // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
   driver.loopHook();
 
-
   // Check the webserver is still working and also helps to save CPU cycles
   //if (currentMinutes == 30) {
-
-
 
   if (millis() - statuscheck >= 30000) {
     statuscheck = millis();
@@ -994,9 +968,6 @@ void loop() {
     delay(1200000);  // ensure wont reboot twice in the same minute
     ESP.restart();   //
   }
-
-
-
 
 
   if (millis() - HeartBeat >= 10000) {
