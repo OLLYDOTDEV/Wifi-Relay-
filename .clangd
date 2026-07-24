@@ -1,0 +1,13 @@
+CompileFlags:
+  Remove:
+    - -mlongcalls
+    - -mtext-section-literals
+    - -free
+    - -fipa-pta
+
+Diagnostics:
+  Suppress:
+    - drv_unknown_argument_with_suggestion
+    - drv_unknown_argument
+    - fatal_too_many_errors
+    - redefinition_different_typedef
