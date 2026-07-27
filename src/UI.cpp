@@ -1,132 +1,9 @@
+#include "UI.h"
 
-#include <EmbAJAX.h>
-#include <EmbAJAXScriptedSpan.h>
-
-void selectMode() {
-
-
-  switch (currentMode) {
-    case 1:
-      status_Mode_submit.setValue("<br><h4>Current Mode: Override - Off</h4>", true);
-      break;
-    case 2:
-      status_Mode_submit.setValue("<br><h4>Current Mode: Override - On</h4>", true);
-      break;
-    case 3:
-      status_Mode_submit.setValue("<br><h4>Current Mode: Automatic schedule</h4>", true);
-      break;
-    case 4:
-      status_Mode_submit.setValue("<br><h4>Current Mode: Delayed Timer</h4>", true);
-      break;
-  }
-}
-
-void updateUI() {
-  // Enabled / disable the slider. Note that you could simply do this inside the loop. However,
-  // placing it here makes the client UI more responsive (try it).
-  // timeractive.setEnabled(timer!= 0);
-
-  // Override Display Control - On
-
-
-  // Override Display Control - Off
-
-  // Automatic Display Control
-
-  hours_contents.setVisible(currentMode == 3);
-
-
-  if (m_button_schedule_Set.status() == EmbAJAXMomentaryButton::Pressed) {
-
-
-    Serial.println("Schedule submitted");
-
-    for (int i = 0; i < 24; i++) {
-      schedule[i] = hours[i].isChecked();
-    }
-    Serial.println("Schedule updated:");
-    for (int i = 0; i < 24; i++) {
-      Serial.print("Hour ");
-      Serial.print(i);
-      Serial.print(": ");
-      Serial.println(schedule[i]);
-    }
-
-    saveSchedule();  // Save current schedule
-    Serial.println("Schedule save to EEPROM");
-  }
-
-
-
-
-
-
-
-
-
-  // Timer  Display Control
-
-
-  Dropdown_Time.setVisible(currentMode == 4);
-  input_time_duration.setVisible(currentMode == 4);
-  m_button_Timer_Set.setVisible(currentMode == 4);
-  Remaining_Timer.setVisible(currentMode == 4);
-  // Save timer variables
-  if (m_button_Timer_Set.status() == EmbAJAXMomentaryButton::Pressed) {
-
-    Serial.println("Timer Data Submitted");
-    switch (Dropdown_Time.selectedOption()) {  // duration in minutes * converation factor to ms
-      case 0:
-        timerduration = 10 * 60000;
-        break;
-      case 1:
-        timerduration = 30 * 60000;
-        break;
-      case 2:
-        timerduration = 60 * 60000;
-        break;
-      case 3:
-        timerduration = 180 * 60000;
-        break;
-      case 4:
-        timerduration = 360 * 60000;
-        break;
-      case 5:
-        timerduration = 720 * 60000;  // Not used yet
-        break;
-      case 6:
-        timerduration = 0 * 60000;  // Not used yet
-        break;
-      default:
-        Serial.println("Error Invalid Timer duration ");
-        break;
-    }
-    Serial.print("Selected Timer duration: ");
-    Serial.println(timerduration);
-
-    starttime = millis();  // Save the time when the button was pushed
-  }
-
-
-
-
-
-  if (m_button_Mode_submit.status() == EmbAJAXMomentaryButton::Pressed) {
-    currentMode = Radio_mode.selectedOption();
-    Serial.println("Mode updated");
-    saveMode();
-
-    status_Mode_submit.setValue(itoa(currentMode, status_Mode_submit_b, 10));
-
-    selectMode();
-  }
-
-  Serial.println("updateUI Finished");
-}
 
 char date_str[32] = "";
 
-int currentHour = 0;  // Variable to store the current hour in 24-hour format
+int CurrentMode = 0;  // Variable to store the current hour in 24-hour format
 int currentMinutes = 0;
 // 24 hours array
 bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Initialize with all hours OFF
@@ -142,7 +19,7 @@ int timerduration = 0;
 bool relay_status = 0;
 
 int WebErrorCount = 0;  // Variable to track the amount of web fails
-
+#define BUFLEN 10
 // Radio selector for mode select
 const char* modes[] = { "hidden", "Override - Off", "Override - On", "Automatic schedule", "Delayed Timer" };
 EmbAJAXRadioGroup<5> Radio_mode("mode", modes);
@@ -558,3 +435,134 @@ MAKE_EmbAJAXPage(
     "    if (label) {"
     "    label.style.display = 'none';"
     "    }</script>"));
+
+
+void Setup_Wifi_AP(){}
+
+
+void Setup_Wifi_Client(){}
+
+
+void updateUI() {
+  // Enabled / disable the slider. Note that you could simply do this inside the loop. However,
+  // placing it here makes the client UI more responsive (try it).
+  // timeractive.setEnabled(timer!= 0);
+
+  // Override Display Control - On
+
+
+  // Override Display Control - Off
+
+  // Automatic Display Control
+
+  hours_contents.setVisible(CurrentMode == 3);
+
+
+  if (m_button_schedule_Set.status() == EmbAJAXMomentaryButton::Pressed) {
+
+
+    Serial.println("Schedule submitted");
+
+    for (int i = 0; i < 24; i++) {
+      schedule[i] = hours[i].isChecked();
+    }
+    Serial.println("Schedule updated:");
+    for (int i = 0; i < 24; i++) {
+      Serial.print("Hour ");
+      Serial.print(i);
+      Serial.print(": ");
+      Serial.println(schedule[i]);
+    }
+
+    saveSchedule();  // Save current schedule
+    Serial.println("Schedule save to EEPROM");
+  }
+    // Timer  Display Control
+
+
+  Dropdown_Time.setVisible(CurrentMode == 4);
+  input_time_duration.setVisible(CurrentMode == 4);
+  m_button_Timer_Set.setVisible(CurrentMode == 4);
+  Remaining_Timer.setVisible(CurrentMode == 4);
+  // Save timer variables
+  if (m_button_Timer_Set.status() == EmbAJAXMomentaryButton::Pressed) {
+
+    Serial.println("Timer Data Submitted");
+    switch (Dropdown_Time.selectedOption()) {  // duration in minutes * converation factor to ms
+      case 0:
+        timerduration = 10 * 60000;
+        break;
+      case 1:
+        timerduration = 30 * 60000;
+        break;
+      case 2:
+        timerduration = 60 * 60000;
+        break;
+      case 3:
+        timerduration = 180 * 60000;
+        break;
+      case 4:
+        timerduration = 360 * 60000;
+        break;
+      case 5:
+        timerduration = 720 * 60000;  // Not used yet
+        break;
+      case 6:
+        timerduration = 0 * 60000;  // Not used yet
+        break;
+      default:
+        Serial.println("Error Invalid Timer duration ");
+        break;
+    }
+    Serial.print("Selected Timer duration: ");
+    Serial.println(timerduration);
+
+    starttime = millis();  // Save the time when the button was pushed
+  }
+
+
+
+
+
+  if (m_button_Mode_submit.status() == EmbAJAXMomentaryButton::Pressed) {
+    CurrentMode = Radio_mode.selectedOption();
+    Serial.println("Mode updated");
+    saveMode(1);
+
+    status_Mode_submit.setValue(itoa(CurrentMode, status_Mode_submit_b, 10));
+
+    selectMode();
+  }
+
+  Serial.println("updateUI Finished");
+}
+
+void selectMode() {
+
+
+  switch (CurrentMode) {
+    case 1:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Override - Off</h4>", true);
+      break;
+    case 2:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Override - On</h4>", true);
+      break;
+    case 3:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Automatic schedule</h4>", true);
+      break;
+    case 4:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Delayed Timer</h4>", true);
+      break;
+  }
+}
+
+void Initalize_UI(){
+
+  // Create Pages
+  driver.installPage(&page, "/", updateUI);
+  server.begin();
+  Serial.println("Webserver started");
+  updateUI();  // init displays
+
+}
+

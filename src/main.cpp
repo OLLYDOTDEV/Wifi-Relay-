@@ -1,59 +1,28 @@
+#include <Arduino.h>
+#include "Persistence_Data.h"
+#include "UI.h"
+#include "Networking.h"
+#include "Hardware_Control.h"
+
 
 #define relayPin 5  // GPIO5 connected to relay control pin
 
-#define BUFLEN 10
 
-int lastmode = 100;
-int currentMode = 0;
-int HeartBeat = 0;
-int lastbeat = 0;
-int statuscheck = 0;
+int G_lastmode = 100;
+int G_CurrentMode = 0;
+int G_HeartBeat = 0;
+int G_lastbeat = 0;
+int G_statuscheck = 0;
 
 
 
 
 void setup() {
-  pinMode(relayPin, OUTPUT);        // Set relay pin as output
-  pinMode_function(relayPin, LOW);  // Initialize relay to off
 
-  // Setup Network
-  Serial.begin(115200);
-  delay(1500);
-  Serial.println("");
-  WiFi.begin(ssid, password);  // Connect to WiFi
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
+Initalize_Hardware();
+Initalize_ExistingNetwork();
+Initalize_UI();
 
-  Serial.println("Schedule loaded to EEPROM");
-
-  loadMode();
-  loadSchedule();  // load schedule array from NVM
-  // ClearState();  // Keep Comneted unless required [will clear set NVM keys]
-
-  Serial.println("WiFi connected");
-  Serial.println("ESP8266 IP Address: ");
-  Serial.println(WiFi.localIP());  // Print the IP address to Serial Monitor
-  Serial.println("WiFi status: " + String(WiFi.status()));
-  Serial.println("Starting UDP");
-  Udp.begin(localPort);
-  Serial.print("Local port: ");
-  Serial.println(Udp.localPort());
-  Serial.println("Waiting for sync");
-  setSyncProvider(getNtpTime);
-  //setSyncInterval(86400);
-  setSyncInterval(60);
-
-  lastbeat = millis();
-
-  // Create Pages
-  delay(1000);
-  driver.installPage(&page, "/", updateUI);
-  server.begin();
-  Serial.println("Webserver started");
-  updateUI();  // init displays
 }
 
 
@@ -104,29 +73,29 @@ void loop() {
 
 
 
-  if (currentMode == 0 || currentMode == 1) {  // Override - OFF
+  if (CurrentMode == 0 || CurrentMode == 1) {  // Override - OFF
 
-    if (lastmode != currentMode) {  // execute code only once  on mode switch
-      lastmode = currentMode;
+    if (lastmode != CurrentMode) {  // execute code only once  on mode switch
+      lastmode = CurrentMode;
       Serial.print("Selected mode: ");
-      Serial.println(currentMode);
+      Serial.println(CurrentMode);
       pinMode_function(relayPin, LOW);
     }
 
 
 
-  } else if (currentMode == 2) {    // Override - ON
-    if (lastmode != currentMode) {  // execute code only once on mode switch
-      lastmode = currentMode;
+  } else if (CurrentMode == 2) {    // Override - ON
+    if (lastmode != CurrentMode) {  // execute code only once on mode switch
+      lastmode = CurrentMode;
       Serial.print("Selected mode: ");
-      Serial.println(currentMode);
+      Serial.println(CurrentMode);
       pinMode_function(relayPin, HIGH);
     }
   }
 
 
 
-  else if (currentMode == 3) {  // Automatic schedule
+  else if (CurrentMode == 3) {  // Automatic schedule
 
     for (int i = 0; i < 24; i++) {  // Update UI for current schedule
       Set_schedule[i].setValue(schedule[i] ? "✔️" : "❌");
@@ -134,7 +103,7 @@ void loop() {
 
 
     timerduration = 0;  // reset timer
-    if (schedule[currentHour]) {
+    if (schedule[CurrentMode]) {
       pinMode_function(relayPin, HIGH);  // Turn relay ON
     } else {
       pinMode_function(relayPin, LOW);  // Turn relay OFF
@@ -142,11 +111,11 @@ void loop() {
   }
 
 
-  else if (currentMode == 4) {      // Override - Delayed Timer
-    if (lastmode != currentMode) {  // execute code only once on mode switch
-      lastmode = currentMode;
+  else if (CurrentMode == 4) {      // Override - Delayed Timer
+    if (lastmode != CurrentMode) {  // execute code only once on mode switch
+      lastmode = CurrentMode;
       Serial.print("Selected mode: ");
-      Serial.println(currentMode);
+      Serial.println(CurrentMode);
       pinMode_function(relayPin, LOW);
       timerduration = 0;  // reset timer
     }
@@ -197,7 +166,7 @@ void loop() {
 
 
 
-
+  char date_str[32] = "";
   timestring();
 
 
@@ -213,7 +182,7 @@ void loop() {
 
   // Calling fuctions to handles webserver and Memory issues and other soft locks
 
-  if (currentHour == 11 && currentMinutes == 59) {  // reboot at 11:59 am
+  if (CurrentMode == 11 && currentMinutes == 59) {  // reboot at 11:59 am
     pinMode_function(relayPin, LOW);
     Serial.println("Automatic Reboot in 60 seconds");
     delay(1200000);  // ensure wont reboot twice in the same minute
@@ -232,15 +201,3 @@ void loop() {
   delay(1);
 }
 
-void pinMode_function(int pin, bool state) {
-
-  if (relay_status != state) {
-    updateUI();  // keeps UI updates faster
-    relay_status = state;
-    Serial.print("Pin State: ");
-    Serial.println(state);
-    delay(1000);  // delays required to prevent watchdog timer
-    digitalWrite(pin, state);
-    delay(4000);
-  }
-}

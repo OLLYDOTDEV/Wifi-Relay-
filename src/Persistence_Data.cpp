@@ -1,6 +1,9 @@
-#include <Preferences.h>
-
+#include <Persistence_Data.h>
+#include "UI.h"
 Preferences preferences;
+
+  bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
 
 void saveSchedule() {
   preferences.begin("schedule", false);                          // Open namespace "schedule"
@@ -18,36 +21,34 @@ void loadSchedule() {
   } else {
     Serial.println("Failed to load from EEPROM");
   }
-
-
   preferences.end();  // Close namespace
   delay(250);
 }
 
 
 
-void saveMode() {
+void saveMode(int CurrentMode) {
   preferences.begin("mode", false);
-  preferences.putInt("currentMode", currentMode);
+  preferences.putInt("CurrentMode", CurrentMode);
   preferences.end();
   Serial.println("Mode saved");
   delay(250);
 }
 
-void loadMode() {
+void loadMode(int CurrentMode) {
   preferences.begin("mode", true);
-  if (preferences.isKey("currentMode")) {
-    currentMode = preferences.getInt("currentMode", 0);
+  if (preferences.isKey("CurrentMode")) {
+    CurrentMode = preferences.getInt("CurrentMode", 0);
     selectMode();
   } else {
     Serial.println("Failed to load from EEPROM");
-    currentMode = 0;  // Set a default value
+    CurrentMode = 0;  // Set a default value
   }
   preferences.end();
   delay(250);
 }
 
-void ClearState() {
+void ClearState(int CurrentMode) {
   Serial.println("Clearing Saved keys");
   preferences.begin("mode", false);
   preferences.clear();
@@ -59,6 +60,6 @@ void ClearState() {
   preferences.end();
 
 
-  currentMode = 0;
+  CurrentMode = 0;
   bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 }
