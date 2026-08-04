@@ -2,17 +2,16 @@
 #include "UI.h"
 Preferences preferences;
 
-  bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+ 
 
-
-void saveSchedule() {
+void saveSchedule(int* schedule) {
   preferences.begin("schedule", false);                          // Open namespace "schedule"
   preferences.putBytes("schedule", schedule, sizeof(schedule));  // Save schedule array
   preferences.end();
   delay(250);  // Close namespace
 }
 
-void loadSchedule() {
+void loadSchedule(int* schedule) {
   preferences.begin("schedule", true);  // Open namespace "schedule" (read-only)
 
   if (preferences.isKey("schedule")) {
@@ -48,7 +47,7 @@ void loadMode(int CurrentMode) {
   delay(250);
 }
 
-void ClearState(int CurrentMode) {
+void ClearState(int CurrentMode, char* schedule) {
   Serial.println("Clearing Saved keys");
   preferences.begin("mode", false);
   preferences.clear();
@@ -61,5 +60,5 @@ void ClearState(int CurrentMode) {
 
 
   CurrentMode = 0;
-  bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  //schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 }

@@ -1,13 +1,10 @@
 #include "UI.h"
 
 
-char date_str[32] = "";
+
 
 int CurrentMode = 0;  // Variable to store the current hour in 24-hour format
 int currentMinutes = 0;
-// 24 hours array
-bool schedule[24] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };  // Initialize with all hours OFF
-
 EmbAJAXOutputDriverWebServerClass server(80);
 EmbAJAXOutputDriver driver(&server);
 
@@ -443,7 +440,7 @@ void Setup_Wifi_AP(){}
 void Setup_Wifi_Client(){}
 
 
-void updateUI() {
+void updateUI(int* schedule) {
   // Enabled / disable the slider. Note that you could simply do this inside the loop. However,
   // placing it here makes the client UI more responsive (try it).
   // timeractive.setEnabled(timer!= 0);
@@ -566,3 +563,24 @@ void Initalize_UI(){
 
 }
 
+
+void timeremaining(){
+
+  unsigned long seconds_remaining = timerduration / 1000;
+  unsigned long minutes_remaining = seconds_remaining / 60;
+  unsigned long hours_remaining = minutes_remaining / 60;
+  seconds_remaining = seconds_remaining % 60;
+  minutes_remaining = minutes_remaining % 60;
+  char formattedTime_remaining[9] = " ";  // HH:MM:SS\0
+  sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
+}
+
+void WebserverSubroutine(){
+
+
+
+  // Calling fuctions to handles webserver and Memory issues and other soft locks
+
+
+
+} 

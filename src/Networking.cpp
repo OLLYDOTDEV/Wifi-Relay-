@@ -1,9 +1,8 @@
-#pragma once
 #include "Networking.h"
 
 // Replace with your network credentials
-const char* ssid = "testtest";
-const char* password = "testtest";
+const char* ssid = "";
+const char* password = "";
 
 // New Zealand Daylight Saving Time rules
 TimeChangeRule nzDst = { "NZDT", Last, Sun, Sep, 2, 780 };  // Daylight time = UTC + 13 hours
@@ -44,10 +43,7 @@ void Initalize_ExistingNetwork(int CurrentMode){
   setSyncProvider(getNtpTime);
   //setSyncInterval(86400);
   setSyncInterval(60);
-
-  lastbeat = millis();
-
-}
+  }
 
 
 
@@ -120,7 +116,7 @@ void sendNTPpacket(IPAddress& address) {
 // Functions below required for NTB timer server sync
 time_t getNtpTime() {
   // Set NTP Server
-  const char* ntpServer = "nz.pool.ntp.org";
+  //const char* ntpServer = "nz.pool.ntp.org";
   static const char ntpServerName[] = "nz.pool.ntp.org";
 
   IPAddress ntpServerIP;  // NTP server's ip address

@@ -9,3 +9,6 @@
 void updateUI();
 void selectMode();
 void Initalize_UI();
+void WebserverSubroutine();
+
+
