@@ -1,8 +1,16 @@
 #include <Persistence_Data.h>
 #include "UI.h"
+#include "esp8266_peri.h"
 Preferences preferences;
 
- 
+// consider refactoring to a single save and load function with more inputs to control the namescope
+
+
+
+
+// 
+
+// -----------------
 
 void saveSchedule(int* schedule) {
   preferences.begin("schedule", false);                          // Open namespace "schedule"

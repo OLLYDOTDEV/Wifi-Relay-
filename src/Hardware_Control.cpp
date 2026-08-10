@@ -1,13 +1,17 @@
 #include "Hardware_Control.h"
 
 
-void Initalize_Hardware(int RelayPin){
+void Initalize_Hardware(const int RelayPin){
 
   pinMode(RelayPin, OUTPUT);        // Set relay pin as output
   PinMode_Function(RelayPin, LOW,HIGH);  // Initialize relay to off
   Serial.begin(115200);
-  delay(1500);
-  Serial.println("Serial Port Started \n");
+  while (!Serial) {}; // Wait for setup to be ready
+  Serial.println();
+	delay(1000);
+	Serial.println("Serial Port Started \n");
+	Serial.flush();
+	delay(1000);
 }
 
 void PinMode_Function(int pin, bool state,bool relay_status) {
@@ -39,4 +43,29 @@ void HeartBeat(int HeartBeat,char* date_str){
     Serial.print("HeartBeat: ");
     Serial.println(date_str);
   }
+}
+
+void GetInput(char* InputMsg,char* Array){
+Serial.println(InputMsg);
+
+int InputAccepted = false;
+
+delay(200);
+while (InputAccepted == false){
+    if (Serial.available() > 0){
+      int n = Serial.readBytes(Array,98);
+			Array[n] = '\0';
+      Serial.print("Buffer Value received: ");
+      Serial.println(Array);
+			Serial.println("Confirm Input? (Y/N)");
+    if (Serial.available() > 0){
+			// int (Serial.read() == 'y' or 'Y') ? 1 : 0 ;
+			int InputAccepted (Serial.read() == 'y') ? 1 : 0
+    }
+	yield();	
+
+	}
+
+// type y to save or n to reenter value	
+}
 }

@@ -571,7 +571,7 @@ void timeremaining(){
   unsigned long hours_remaining = minutes_remaining / 60;
   seconds_remaining = seconds_remaining % 60;
   minutes_remaining = minutes_remaining % 60;
-  char formattedTime_remaining[9] = " ";  // HH:MM:SS\0
+  char formattedTime_remaining[10] = " ";  // HH:MM:SS\0
   sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
 }
 

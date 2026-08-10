@@ -1,13 +1,13 @@
 #include "Networking.h"
+#include "HardwareSerial.h"
 
 // Replace with your network credentials
-const char* ssid = "";
-const char* password = "";
+
 
 // New Zealand Daylight Saving Time rules
 TimeChangeRule nzDst = { "NZDT", Last, Sun, Sep, 2, 780 };  // Daylight time = UTC + 13 hours
 TimeChangeRule nzStd = { "NZST", Last, Sun, Apr, 3, 720 };  // Standard time = UTC + 12 hours
-Timezone nz(nzDst, nzStd);
+Timezone TZ_NZ(nzDst, nzStd);
 
 // Wifi UDP variables 
 WiFiUDP Udp;
@@ -17,19 +17,15 @@ byte packetBuffer[NTP_PACKET_SIZE];  // Buffer to hold incoming and outgoing pac
 
 
 
-void Initalize_ExistingNetwork(int CurrentMode){
+
+
+void Initalize_ExistingNetwork(char* ssid, char* password){
+
   WiFi.begin(ssid, password);  // Connect to WiFi
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("");
-
-  Serial.println("Schedule loaded to EEPROM");
-
-  loadMode(CurrentMode);
-  loadSchedule();  // load schedule array from NVM
-  // ClearState();  // Keep Comneted unless required [will clear set NVM keys]
 
   Serial.println("WiFi connected");
   Serial.println("ESP8266 IP Address: ");
@@ -50,7 +46,7 @@ void Initalize_ExistingNetwork(int CurrentMode){
 
 
 
-void checkWiFi() {
+void checkWiFi(char* ssid, char* password) {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Reconnecting to WiFi...");
     WiFi.disconnect();
@@ -73,20 +69,20 @@ void checkWiFi() {
 
 void timestring(char* date_str) {
   time_t utc = now();
-  time_t local = nz.toLocal(utc);
+  time_t local = TZ_NZ.toLocal(utc);
   sprintf(date_str, "%04d-%02d-%02d %02d:%02d", year(local), month(local), day(local), hour(local), minute(local));
  }
 
  int GetHours(){
   time_t utc = now();
-  time_t local = nz.toLocal(utc);
+  time_t local = TZ_NZ.toLocal(utc);
   return hour(local);  // Update the current hour variable
  }
 
 
  int GetMinutes(){
   time_t utc = now();
-  time_t local = nz.toLocal(utc);
+  time_t local = TZ_NZ.toLocal(utc);
   return minute(local);
  }
 

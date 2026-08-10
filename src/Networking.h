@@ -8,11 +8,11 @@
 #include <TimeLib.h>
 #include "Persistence_Data.h"
 
-void checkWiFi();
+void checkWiFi(char* ssid, char* password);
 void timestring(char* date_str);
 int GetHours();
 int GetMinutes();
 void sendNTPpacket(IPAddress& address);
 time_t getNtpTime();
 
-void Initalize_ExistingNetwork();
+void Initalize_ExistingNetwork(char* ssid, char* password);
