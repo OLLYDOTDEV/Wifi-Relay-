@@ -1,4 +1,5 @@
 #include "Hardware_Control.h"
+#include "HardwareSerial.h"
 
 
 void Initalize_Hardware(const int RelayPin){
@@ -46,26 +47,34 @@ void HeartBeat(int HeartBeat,char* date_str){
 }
 
 void GetInput(char* InputMsg,char* Array){
-Serial.println(InputMsg);
 
+Serial.println(InputMsg); 
+  
 int InputAccepted = false;
 
-delay(200);
 while (InputAccepted == false){
-    if (Serial.available() > 0){
+
+  if (Serial.available() > 0){
       int n = Serial.readBytes(Array,98);
 			Array[n] = '\0';
       Serial.print("Buffer Value received: ");
       Serial.println(Array);
 			Serial.println("Confirm Input? (Y/N)");
-    if (Serial.available() > 0){
-			// int (Serial.read() == 'y' or 'Y') ? 1 : 0 ;
-			int InputAccepted (Serial.read() == 'y') ? 1 : 0
+      while (Serial.available() == 0 ){}
+      char ShortBuff[0];
+      Serial.readBytes(ShortBuff,1);
+
+      InputAccepted = (ShortBuff[0] == 'y' || ShortBuff[0] == 'Y') ? true : false;
+      if (InputAccepted == false){
+        Serial.println(InputMsg); 
+      }
     }
-	yield();	
+	yield();
 
 	}
 
-// type y to save or n to reenter value	
+delay(200);  
+      Serial.println("Input Confirmed");
 }
-}
+
+

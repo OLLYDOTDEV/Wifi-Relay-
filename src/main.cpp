@@ -41,6 +41,7 @@ char Msg[20] = "Input WIFI SSID:";
 GetInput(Msg,WIFI_ssid);
 
 
+
 // else call function get network info an wait for PW over serial.  
 // wait untill network has been connected
 // Initalize_NewNetwork();
