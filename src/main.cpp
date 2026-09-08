@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "HardwareSerial.h"
 #include "UI.h"
 #include "Networking.h"
 #include "Hardware_Control.h"
@@ -37,10 +38,17 @@ Initalize_Hardware(5);
 //  if (WIFI_ssid[0] == '\0' or WIFI_password[0] == '\0'){
 // Serial.println("Networking configurations missing - Initalizing setup");
 
-char Msg[20] = "Input WIFI SSID:";
-GetInput(Msg,WIFI_ssid);
+// char Msg[20] = "Input WIFI SSID:";
 
+GetInput("Input WIFI SSID:",WIFI_ssid);
+GetInput("Input WIFI Password:",WIFI_password);
 
+Serial.println("Storing the bellow values to non-volatile storage");
+Serial.print("Wifi SSID:");
+Serial.println(WIFI_ssid);
+Serial.print("Wifi Password:");
+Serial.println(WIFI_ssid);
+delay(5000);
 
 // else call function get network info an wait for PW over serial.  
 // wait untill network has been connected
@@ -71,9 +79,13 @@ GetInput(Msg,WIFI_ssid);
 
 void loop() {
 
-Serial.println(i);
+
 i++;
 
+if(i<=100){
+Serial.println(i);
+
+}
 
 
 // Network connection

@@ -66,6 +66,7 @@ while (InputAccepted == false){
 
       InputAccepted = (ShortBuff[0] == 'y' || ShortBuff[0] == 'Y') ? true : false;
       if (InputAccepted == false){
+        Serial.println("Input rejected by user, repeating input prompt. \n");
         Serial.println(InputMsg); 
       }
     }
@@ -74,7 +75,7 @@ while (InputAccepted == false){
 	}
 
 delay(200);  
-      Serial.println("Input Confirmed");
+      Serial.println("Input Confirmed.\n\n\n");
 }
 
 
