@@ -15,5 +15,5 @@ int GetMinutes();
 void sendNTPpacket(IPAddress& address);
 time_t getNtpTime();
 
-void Initalize_NewNetwork();
-void Initalize_ExistingNetwork();
+void Initalize_NewNetwork(); // Uses Serial port to read SSID and Password as per promps to user.
+void Initalize_ExistingNetwork(); // Connected to network using saved credentials and establishes NTP connection.

@@ -1,8 +1,6 @@
 #include "UI.h"
 
 
-
-
 int CurrentMode = 0;  // Variable to store the current hour in 24-hour format
 int currentMinutes = 0;
 EmbAJAXOutputDriverWebServerClass server(80);
@@ -169,12 +167,9 @@ EmbAJAXBase* hours_contents_array[] = {
   new EmbAJAXStatic("<br></center>")
 };
 
-
-
 EmbAJAXHideableContainer<74> hours_contents("hideable", hours_contents_array);
 // Delayed Timer
 EmbAJAXMomentaryButton m_button_Timer_Set("Timer_Set", "Timer Set");  // Timer set
-
 
 EmbAJAXTextInput<BUFLEN> input_time_duration("input_time_duration");
 char input_time_duration_b[BUFLEN];
@@ -183,15 +178,11 @@ char input_time_duration_b[BUFLEN];
 const char* Timer_Array[] = { "10 minutes ", "30 minutes ", "1 hour", "3 hours", "6 hours", "12 hours" };
 EmbAJAXOptionSelect<6> Dropdown_Time("Time_Array", Timer_Array);
 
-
-
 EmbAJAXMutableSpan Relay_enabled_status("relay_status");
 EmbAJAXMutableSpan Current_time_status("Current_time");
 char Current_timeM_status_b[BUFLEN];
 char Current_timeH_status_b[BUFLEN];
 EmbAJAXMutableSpan Remaining_Timer("Remaining_Timer_HH_MM");
-
-
 
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
@@ -435,13 +426,45 @@ MAKE_EmbAJAXPage(
 
 
 
-void updateUI(int* schedule) {
+void selectMode() {
+
+
+  switch (CurrentMode) {
+    case 1:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Override - Off</h4>", true);
+      break;
+    case 2:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Override - On</h4>", true);
+      break;
+    case 3:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Automatic schedule</h4>", true);
+      break;
+    case 4:
+      status_Mode_submit.setValue("<br><h4>Current Mode: Delayed Timer</h4>", true);
+      break;
+  }
+}
+
+void Initialize_UI(){
+
+  // Create Pages
+  driver.installPage(&page, "/", updateUI);
+  server.begin();
+  Serial.println("Webserver started");
+  // updateUI();  // init displays
+
+}
+
+void updateUI() {
+
+bool schedule[24] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+  
   // Enabled / disable the slider. Note that you could simply do this inside the loop. However,
   // placing it here makes the client UI more responsive (try it).
   // timeractive.setEnabled(timer!= 0);
 
   // Override Display Control - On
-
 
   // Override Display Control - Off
 
@@ -467,7 +490,7 @@ void updateUI(int* schedule) {
     }
 
     // saveSchedule();  // Save current schedule
-    Serial.println("Schedule save to EEPROM");
+    Serial.println("Schedule saved to EEPROM");
   }
     // Timer  Display Control
 
@@ -480,7 +503,7 @@ void updateUI(int* schedule) {
   if (m_button_Timer_Set.status() == EmbAJAXMomentaryButton::Pressed) {
 
     Serial.println("Timer Data Submitted");
-    switch (Dropdown_Time.selectedOption()) {  // duration in minutes * converation factor to ms
+    switch (Dropdown_Time.selectedOption()) {  // duration in minutes * conversion factor to ms
       case 0:
         timerduration = 10 * 60000;
         break;
@@ -512,10 +535,6 @@ void updateUI(int* schedule) {
     starttime = millis();  // Save the time when the button was pushed
   }
 
-
-
-
-
   if (m_button_Mode_submit.status() == EmbAJAXMomentaryButton::Pressed) {
     CurrentMode = Radio_mode.selectedOption();
     Serial.println("Mode updated");
@@ -529,36 +548,6 @@ void updateUI(int* schedule) {
   Serial.println("updateUI Finished");
 }
 
-void selectMode() {
-
-
-  switch (CurrentMode) {
-    case 1:
-      status_Mode_submit.setValue("<br><h4>Current Mode: Override - Off</h4>", true);
-      break;
-    case 2:
-      status_Mode_submit.setValue("<br><h4>Current Mode: Override - On</h4>", true);
-      break;
-    case 3:
-      status_Mode_submit.setValue("<br><h4>Current Mode: Automatic schedule</h4>", true);
-      break;
-    case 4:
-      status_Mode_submit.setValue("<br><h4>Current Mode: Delayed Timer</h4>", true);
-      break;
-  }
-}
-
-void Initalize_UI(){
-
-  // Create Pages
-  driver.installPage(&page, "/", updateUI);
-  server.begin();
-  Serial.println("Webserver started");
-  updateUI();  // init displays
-
-}
-
-
 void timeremaining(){
 
   unsigned long seconds_remaining = timerduration / 1000;
@@ -566,7 +555,7 @@ void timeremaining(){
   unsigned long hours_remaining = minutes_remaining / 60;
   seconds_remaining = seconds_remaining % 60;
   minutes_remaining = minutes_remaining % 60;
-  char formattedTime_remaining[10] = " ";  // HH:MM:SS\0
+  char formattedTime_remaining[14] = " ";  // HH:MM:SS\0
   sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
 }
 

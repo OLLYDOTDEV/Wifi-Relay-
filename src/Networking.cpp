@@ -87,11 +87,6 @@ void Initalize_ExistingNetwork(){
   delay(5000);
   }
 
-
-
-
-
-
 void checkWiFi() {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Reconnecting to WiFi...");

@@ -29,15 +29,12 @@ Initalize_Hardware(5);
 Initalize_ExistingNetwork();
 
 
-
-  // Serial.println("");
-
-  // Serial.println("Schedule loaded to EEPROM");
+//  Below fuctions require refactoring to match SaveValue() and LoadValue() functions
   // loadMode(G_CurrentMode);
-  // loadSchedule();  // load schedule array from NVM
+  // loadSchedule();  // load schedule array from NVM 
   
 
-//Initalize_UI();
+Initialize_UI();
 
 
 
@@ -69,7 +66,7 @@ ESP.restart();
 //WebserverSubroutine();
 
 
-// checkWiFi(WIFI_ssid,WIFI_password); // 
+// checkWiFi(); // 
 
 //TimedRestart(int CurrentMode, int currentMinutes)
 //HeartBeat(G_HeartBeat,G_date_str);
