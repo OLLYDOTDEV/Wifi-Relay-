@@ -1,4 +1,5 @@
 #include "UI.h"
+#include "HardwareSerial.h"
 
 
 int CurrentMode = 0;  // Variable to store the current hour in 24-hour format
@@ -451,13 +452,11 @@ void Initialize_UI(){
   driver.installPage(&page, "/", updateUI);
   server.begin();
   Serial.println("Webserver started");
-  // updateUI();  // init displays
-
 }
 
 void updateUI() {
 
-bool schedule[24] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+// bool schedule[24] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
   
   // Enabled / disable the slider. Note that you could simply do this inside the loop. However,
@@ -478,16 +477,16 @@ bool schedule[24] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 
     Serial.println("Schedule submitted");
 
-    for (int i = 0; i < 24; i++) {
-      schedule[i] = hours[i].isChecked();
-    }
-    Serial.println("Schedule updated:");
-    for (int i = 0; i < 24; i++) {
-      Serial.print("Hour ");
-      Serial.print(i);
-      Serial.print(": ");
-      Serial.println(schedule[i]);
-    }
+    // for (int i = 0; i < 24; i++) {
+    //   schedule[i] = hours[i].isChecked();
+    // }
+    // Serial.println("Schedule updated:");
+    // for (int i = 0; i < 24; i++) {
+    //   Serial.print("Hour ");
+    //   Serial.print(i);
+    //   Serial.print(": ");
+    //   Serial.println(schedule[i]);
+    // }
 
     // saveSchedule();  // Save current schedule
     Serial.println("Schedule saved to EEPROM");
@@ -545,7 +544,7 @@ bool schedule[24] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     selectMode();
   }
 
-  Serial.println("updateUI Finished");
+  // Serial.println("updateUI Finished");
 }
 
 void timeremaining(){
@@ -559,12 +558,7 @@ void timeremaining(){
   sprintf(formattedTime_remaining, "%02lu:%02lu:%02lu", hours_remaining, minutes_remaining, seconds_remaining);
 }
 
-void WebserverSubroutine(){
-
-
-
-  // Calling fuctions to handles webserver and Memory issues and other soft locks
-
-
-
+void WebserverSubroutine(){ // Calling fuctions to handles webserver and Memory issues and other soft locks
+driver.loopHook();
+// Serial.println("LoopHook");
 } 

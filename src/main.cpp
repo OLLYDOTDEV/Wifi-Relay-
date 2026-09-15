@@ -34,27 +34,17 @@ Initalize_ExistingNetwork();
   // loadSchedule();  // load schedule array from NVM 
   
 
+delay(5000);
+
 Initialize_UI();
 
-
-
-
 }
 
 
-int i = 1; 
 
 void loop() {
-
-
-i++;
-Serial.println(i);
-delay(1000);
-if(i>=60){
-Serial.println("Poweroff");
-delay(500);
-ESP.restart();
-}
+WebserverSubroutine();
+// updateUI(); // Update Webpage
 
 
 // Network connection
@@ -72,6 +62,5 @@ ESP.restart();
 //HeartBeat(G_HeartBeat,G_date_str);
 
 yield();
-delay(50);
 }
 

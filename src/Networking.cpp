@@ -59,6 +59,7 @@ void Initalize_ExistingNetwork(){
     LoadValue("WIFI_Password",WIFI_Password,sizeof(WIFI_SSID));
   }
 
+  Serial.println("Initializing Wifi connection");
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_Password); // Connect to WiFi
