@@ -9,7 +9,6 @@
 
 #include "HardwareSerial.h"
 
-void SaveValue(const char* Key,char* Data, int Data_Size); 
-void LoadValue(const char* Key,char* Data, int Data_Size);
+int SaveValue(const char* Key,char* Data, int Data_Size); 
+int LoadValue(const char* Key,char* Data, int Data_Size);
 void ClearState();
-void ClearState(int CurrentMode);

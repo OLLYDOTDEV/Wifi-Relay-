@@ -74,7 +74,7 @@ while (InputAccepted == false){
       InputAccepted = (ShortBuff[0] == 'y' || ShortBuff[0] == 'Y') ? true : false;
       if (InputAccepted == false){
         Serial.println("Input rejected by user, Wait for input prompt to repeat user input. \n");
-        delay(5000);
+        delay(2500);
         while (Serial.available() != 0) {
           Serial.read();  // Read and discard one byte of data from the buffer
         }

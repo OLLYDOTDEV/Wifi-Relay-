@@ -17,51 +17,47 @@ const int NTP_PACKET_SIZE = 48;      // NTP time is in the first 48 bytes of mes
 byte packetBuffer[NTP_PACKET_SIZE];  // Buffer to hold incoming and outgoing packets
 
 
+
 void Initalize_NewNetwork(){
 
-char WIFI_SSID[100] {}; 
-char WIFI_Password[100] {};
+  Serial.println("Wifi credentials missing - Initalizing setup");
 
-// const char* WIFI_SSID = "Blank"; 
-// const char* WIFI_Password = "Test";
+  // Serial.println("Size of array:");
+  // Serial.println(sizeof(WIFI_SSID));
 
-
-Serial.println("Wifi credentials missing - Initalizing setup");
-
-// Serial.println("Size of array:");
-// Serial.println(sizeof(WIFI_SSID));
+  char WIFI_SSID[100] {}; 
+  char WIFI_Password[100] {};
 
 
-LoadValue("WIFI_SSID",WIFI_SSID,sizeof(WIFI_SSID));
-// GetInput("Input WIFI SSID:",WIFI_SSID);
-// SaveValue("WIFI_SSID",WIFI_SSID,sizeof(WIFI_SSID));
+  GetInput("Input WIFI SSID:",WIFI_SSID);
+  SaveValue("WIFI_SSID",WIFI_SSID,sizeof(WIFI_SSID));
 
-for (uint i = 0; i <= sizeof(WIFI_SSID)/sizeof(WIFI_SSID[0])-1; i++){ // Debug returned valve from GetInput()
-Serial.print(i);
-Serial.print(" : ");
-Serial.println(WIFI_SSID[i]);
-}
-
-LoadValue("WIFI_Password",WIFI_Password,sizeof(WIFI_SSID));
-// GetInput("Input WIFI Password:",WIFI_Password);
-// SaveValue("WIFI_Password",WIFI_Password,sizeof(WIFI_SSID));
+  GetInput("Input WIFI Password:",WIFI_Password);
+  SaveValue("WIFI_Password",WIFI_Password,sizeof(WIFI_SSID));
 
 
-WiFi.mode(WIFI_STA);
-WiFi.begin(WIFI_SSID, WIFI_Password);
 
-
-delay(1000);
-
-
+  // for (uint i = 0; i <= sizeof(WIFI_SSID)/sizeof(WIFI_SSID[0])-1; i++){ // Debug returned valve from GetInput()
+  // Serial.print(i);
+  // Serial.print(" : ");
+  // Serial.println(WIFI_SSID[i]);
+  // }
 }
 
 
 
 void Initalize_ExistingNetwork(){
-char WIFI_SSID[100] {}; 
-char WIFI_Password[100] {};
 
+  char WIFI_SSID[100] {}; 
+  char WIFI_Password[100] {};
+
+
+  if (LoadValue("WIFI_SSID",WIFI_SSID,sizeof(WIFI_SSID)) == false || LoadValue("WIFI_Password",WIFI_Password,sizeof(WIFI_SSID)) == false){
+    // If the network credentials missing from , setup and then reload the values into the current function.
+    Initalize_NewNetwork(); 
+    LoadValue("WIFI_SSID",WIFI_SSID,sizeof(WIFI_SSID));
+    LoadValue("WIFI_Password",WIFI_Password,sizeof(WIFI_SSID));
+  }
 
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);

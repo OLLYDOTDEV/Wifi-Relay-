@@ -22,14 +22,11 @@ char date_str[32] = "";
 
 
 void setup() {
-// ClearState();  // Keep commented unless required [will clear set NVM keys]
 
 Initalize_Hardware(5);
 
-Initalize_NewNetwork(); // Uncomment line to setup wifi network
-
+// ClearState();  // Keep commented unless required [will clear set NVM keys]
 Initalize_ExistingNetwork();
-
 
 
 
@@ -55,8 +52,8 @@ void loop() {
 
 i++;
 Serial.println(i);
-
-if(i>=1000){
+delay(1000);
+if(i>=60){
 Serial.println("Poweroff");
 delay(500);
 ESP.restart();
