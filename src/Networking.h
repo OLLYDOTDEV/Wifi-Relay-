@@ -15,4 +15,5 @@ int GetMinutes();
 void sendNTPpacket(IPAddress& address);
 time_t getNtpTime();
 
-void Initalize_ExistingNetwork(char* ssid, char* password);
+void Initalize_NewNetwork();
+void Initalize_ExistingNetwork();

@@ -5,11 +5,6 @@
 #include "Hardware_Control.h"
 
 
-#define relayPin 5  // GPIO5 connected to relay control pin
-
-
-int i = 1; 
-
 
 int G_lastmode = 100;
 int G_CurrentMode = 0;
@@ -24,38 +19,16 @@ char date_str[32] = "";
 
 
 
-char WIFI_ssid[100] {0}; // = restoreNetworkCreditianls(ssid)); 
-char WIFI_password[100] {0};  // = restoreNetworkCreditianls(password); 
+
 
 void setup() {
+// ClearState();  // Keep commented unless required [will clear set NVM keys]
 
 Initalize_Hardware(5);
 
-// Check if ssid & password saved
-// add function to restore saved SSID and password
-// restoreNetworkCreditianls(); 
+Initalize_NewNetwork(); // Uncomment line to setup wifi network
 
-//  if (WIFI_ssid[0] == '\0' or WIFI_password[0] == '\0'){
-// Serial.println("Networking configurations missing - Initalizing setup");
-
-// char Msg[20] = "Input WIFI SSID:";
-
-GetInput("Input WIFI SSID:",WIFI_ssid);
-GetInput("Input WIFI Password:",WIFI_password);
-
-Serial.println("Storing the bellow values to non-volatile storage");
-Serial.print("Wifi SSID:");
-Serial.println(WIFI_ssid);
-Serial.print("Wifi Password:");
-Serial.println(WIFI_ssid);
-delay(5000);
-
-// else call function get network info an wait for PW over serial.  
-// wait untill network has been connected
-// Initalize_NewNetwork();
-// }
-
-//Initalize_ExistingNetwork(WIFI_ssid,WIFI_password);
+Initalize_ExistingNetwork();
 
 
 
@@ -65,8 +38,7 @@ delay(5000);
   // Serial.println("Schedule loaded to EEPROM");
   // loadMode(G_CurrentMode);
   // loadSchedule();  // load schedule array from NVM
-  // ClearState();  // Keep commented unless required [will clear set NVM keys]
-
+  
 
 //Initalize_UI();
 
@@ -76,15 +48,18 @@ delay(5000);
 }
 
 
+int i = 1; 
 
 void loop() {
 
 
 i++;
-
-if(i<=100){
 Serial.println(i);
 
+if(i>=1000){
+Serial.println("Poweroff");
+delay(500);
+ESP.restart();
 }
 
 

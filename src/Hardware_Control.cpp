@@ -1,5 +1,6 @@
 #include "Hardware_Control.h"
 #include "HardwareSerial.h"
+#include <algorithm>
 
 
 void Initalize_Hardware(const int RelayPin){
@@ -46,7 +47,7 @@ void HeartBeat(int HeartBeat,char* date_str){
   }
 }
 
-void GetInput(char* InputMsg,char* Array){
+void GetInput(const char* InputMsg,char* Array){
 
 Serial.println(InputMsg); 
   
@@ -55,19 +56,29 @@ int InputAccepted = false;
 while (InputAccepted == false){
 
   if (Serial.available() > 0){
-      int n = Serial.readBytes(Array,98);
-			Array[n] = '\0';
+
+    int bytesRead = Serial.readBytesUntil('\r', Array, 99); // cant use size of due to decay-to-pointer
+    Serial.read(); // clear buffer
+    Array[bytesRead] = '\0';  // Null-terminate the string
+
+
+
+
       Serial.print("Buffer Value received: ");
       Serial.println(Array);
 			Serial.println("Confirm Input? (Y/N)");
       while (Serial.available() == 0 ){}
-      char ShortBuff[0];
+      char ShortBuff[1];
       Serial.readBytes(ShortBuff,1);
 
       InputAccepted = (ShortBuff[0] == 'y' || ShortBuff[0] == 'Y') ? true : false;
       if (InputAccepted == false){
-        Serial.println("Input rejected by user, repeating input prompt. \n");
-        Serial.println(InputMsg); 
+        Serial.println("Input rejected by user, Wait for input prompt to repeat user input. \n");
+        delay(5000);
+        while (Serial.available() != 0) {
+          Serial.read();  // Read and discard one byte of data from the buffer
+        }
+      Serial.println(InputMsg); 
       }
     }
 	yield();
@@ -75,7 +86,9 @@ while (InputAccepted == false){
 	}
 
 delay(200);  
-      Serial.println("Input Confirmed.\n\n\n");
+Serial.println("Input Confirmed.\n\n\n");
+
+
 }
 
 

@@ -434,11 +434,6 @@ MAKE_EmbAJAXPage(
     "    }</script>"));
 
 
-void Setup_Wifi_AP(){}
-
-
-void Setup_Wifi_Client(){}
-
 
 void updateUI(int* schedule) {
   // Enabled / disable the slider. Note that you could simply do this inside the loop. However,
@@ -471,7 +466,7 @@ void updateUI(int* schedule) {
       Serial.println(schedule[i]);
     }
 
-    saveSchedule();  // Save current schedule
+    // saveSchedule();  // Save current schedule
     Serial.println("Schedule save to EEPROM");
   }
     // Timer  Display Control
@@ -524,7 +519,7 @@ void updateUI(int* schedule) {
   if (m_button_Mode_submit.status() == EmbAJAXMomentaryButton::Pressed) {
     CurrentMode = Radio_mode.selectedOption();
     Serial.println("Mode updated");
-    saveMode(1);
+    // saveMode(1);
 
     status_Mode_submit.setValue(itoa(CurrentMode, status_Mode_submit_b, 10));
 

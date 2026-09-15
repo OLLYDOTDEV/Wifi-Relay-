@@ -1,5 +1,7 @@
 #include "Networking.h"
 #include "HardwareSerial.h"
+#include "Persistence_Data.h"
+
 
 // Replace with your network credentials
 
@@ -15,22 +17,68 @@ const int NTP_PACKET_SIZE = 48;      // NTP time is in the first 48 bytes of mes
 byte packetBuffer[NTP_PACKET_SIZE];  // Buffer to hold incoming and outgoing packets
 
 
+void Initalize_NewNetwork(){
+
+char WIFI_SSID[100] {}; 
+char WIFI_Password[100] {};
+
+// const char* WIFI_SSID = "Blank"; 
+// const char* WIFI_Password = "Test";
+
+
+Serial.println("Wifi credentials missing - Initalizing setup");
+
+// Serial.println("Size of array:");
+// Serial.println(sizeof(WIFI_SSID));
+
+
+LoadValue("WIFI_SSID",WIFI_SSID,sizeof(WIFI_SSID));
+// GetInput("Input WIFI SSID:",WIFI_SSID);
+// SaveValue("WIFI_SSID",WIFI_SSID,sizeof(WIFI_SSID));
+
+for (uint i = 0; i <= sizeof(WIFI_SSID)/sizeof(WIFI_SSID[0])-1; i++){ // Debug returned valve from GetInput()
+Serial.print(i);
+Serial.print(" : ");
+Serial.println(WIFI_SSID[i]);
+}
+
+LoadValue("WIFI_Password",WIFI_Password,sizeof(WIFI_SSID));
+// GetInput("Input WIFI Password:",WIFI_Password);
+// SaveValue("WIFI_Password",WIFI_Password,sizeof(WIFI_SSID));
+
+
+WiFi.mode(WIFI_STA);
+WiFi.begin(WIFI_SSID, WIFI_Password);
+
+
+delay(1000);
+
+
+}
 
 
 
+void Initalize_ExistingNetwork(){
+char WIFI_SSID[100] {}; 
+char WIFI_Password[100] {};
 
-void Initalize_ExistingNetwork(char* ssid, char* password){
 
-  WiFi.begin(ssid, password);  // Connect to WiFi
+  WiFi.persistent(false);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_Password); // Connect to WiFi
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+    Serial.println(".");
+    // WiFi.printDiag(Serial); // Debug connection issues
+    delay(1000);
+    Serial.println();
   }
 
+
   Serial.println("WiFi connected");
-  Serial.println("ESP8266 IP Address: ");
+  WiFi.hostname("Wifi Relay");
+  Serial.print("ESP8266 IP Address: ");
   Serial.println(WiFi.localIP());  // Print the IP address to Serial Monitor
-  Serial.println("WiFi status: " + String(WiFi.status()));
+  Serial.println("WiFi status: " + String(WiFi.status()) + "\n");
   Serial.println("Starting UDP");
   Udp.begin(8888);
   Serial.print("Local port: ");
@@ -39,6 +87,8 @@ void Initalize_ExistingNetwork(char* ssid, char* password){
   setSyncProvider(getNtpTime);
   //setSyncInterval(86400);
   setSyncInterval(60);
+  Serial.println("Synced\n");
+  delay(5000);
   }
 
 
@@ -46,11 +96,11 @@ void Initalize_ExistingNetwork(char* ssid, char* password){
 
 
 
-void checkWiFi(char* ssid, char* password) {
+void checkWiFi() {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Reconnecting to WiFi...");
     WiFi.disconnect();
-    WiFi.begin(ssid, password);
+    WiFi.begin();
 
     unsigned long startAttemptTime = millis();
 
